@@ -21,7 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
-public class Drivetrain {
+public class ri3d {
     DcMotor leftDrive;
     DcMotor rightDrive;
     DcMotor leftBackDrive;
@@ -66,7 +66,7 @@ public class Drivetrain {
     boolean rampUp  = true;
 
 
-    public Drivetrain(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
+    public ri3d(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
         theOpMode = opMode;
         theOpMode.telemetry.addData("Running to", "here");
         theOpMode.telemetry.update();
@@ -74,10 +74,6 @@ public class Drivetrain {
         rightDrive = hardwareMap.dcMotor.get("rightDrive");
         leftBackDrive = hardwareMap.dcMotor.get("leftBackDrive");
         rightBackDrive = hardwareMap.dcMotor.get("rightBackDrive");
-
-        distanceSensor1 = theOpMode.hardwareMap.get(DistanceSensor.class, "distanceSensor1");
-        colorSensor = theOpMode.hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
-        rangeSensor = theOpMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rangeSensor");
 
 
         leftDrive.setDirection(DcMotor.Direction.FORWARD);

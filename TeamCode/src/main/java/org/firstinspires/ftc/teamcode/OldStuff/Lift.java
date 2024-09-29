@@ -18,7 +18,6 @@ public class Lift {
     private DistanceSensor sensorRange;
     private ElapsedTime runtime = new ElapsedTime();
     private OpMode theOpMode;
-    private ArrayList<Double> liftHeights;
     private int teleopLiftHeight = 0;
     private double targetHeight = 0;
     double countsPerInch;
@@ -33,13 +32,12 @@ public class Lift {
 
 
 
-    public Lift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter, ArrayList<Double> LiftHeights) {
-        liftHeights = LiftHeights;
+    public Lift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
         countsPerInch = (encoderTicksPerRev * gearRatio) / (wheelDiameter * 3.14);
         theOpMode = opMode;
         leftMotor = hardwareMap.get(DcMotor.class, "leftMotor");
         rightMotor = hardwareMap.get(DcMotor.class, "rightMotor");
-        leftMotor.setDirection(DcMotor.Direction.FORWARD);
+        leftMotor.setDirection(DcMotor.Direction.REVERSE);
         rightMotor.setDirection(DcMotor.Direction.REVERSE);
         //   sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
         rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -47,15 +45,15 @@ public class Lift {
         // sensorTouch = hardwareMap.get(TouchSensor.class, "touchSensor");
     }
     public void teleLift() {
-        leftMotor.setPower(theOpMode.gamepad2.right_stick_y * .7);
-        rightMotor.setPower(theOpMode.gamepad2.right_stick_y * .7);
+        leftMotor.setPower(theOpMode.gamepad2.right_stick_y);
+        rightMotor.setPower(-theOpMode.gamepad2.right_stick_y);
 
         if (theOpMode.gamepad1.left_trigger > .05) {
-            leftMotor.setPower(theOpMode.gamepad1.left_trigger);
+            leftMotor.setPower(-theOpMode.gamepad1.left_trigger);
             rightMotor.setPower(theOpMode.gamepad1.left_trigger);
         }
         if (theOpMode.gamepad1.right_trigger > .05) {
-            leftMotor.setPower(-theOpMode.gamepad1.right_trigger);
+            leftMotor.setPower(theOpMode.gamepad1.right_trigger);
             rightMotor.setPower(-theOpMode.gamepad1.right_trigger);
         }
     }

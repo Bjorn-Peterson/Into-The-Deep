@@ -11,53 +11,41 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-public class Collection {
+public class Collection3d {
     private ElapsedTime runtime = new ElapsedTime();
-    Servo rotatorServo;
-    Servo rotServo;
-    Servo imAboutToDie;
-    Servo imGoingToDie;
-    Servo hangServo;
-    Servo droneServo;
-    Servo adjustServo;
-    Servo angleServo;
-    DcMotor hangMotor;
-    DcMotor collectionMotor;
-    NormalizedColorSensor colorSensor;
-    NormalizedColorSensor delivSensor;
+    Servo rCollection;
+    Servo lCollection;
+    Servo rDelivery;
+    Servo lDelivery;
+    Servo box;
+    CRServo hangS;
+    DcMotor collection;
+    DcMotor hang;
+
+
     private OpMode theOpMode;
-    double armSpeed = 0;
-    double imGoingToDie1;
-    static final double imGoingToDie2 = .2;
 
-    double imAboutToDie1;
-    static final double imAboutToDie2 = .2;
-
-    public Collection(HardwareMap hardwareMap, OpMode opMode) {
+    public Collection3d(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
-        rotatorServo = hardwareMap.get(Servo.class, "rotatorServo");
-        rotServo = hardwareMap.get(Servo.class, "rotServo");
-        imAboutToDie = hardwareMap.get(Servo.class, "leftBox");
-        imGoingToDie = hardwareMap.get(Servo.class, "rightBox");
-        hangMotor = hardwareMap.get(DcMotor.class, "hang");
-        collectionMotor = hardwareMap.get(DcMotor.class, "collectionMotor");
-        hangServo = hardwareMap.get(Servo.class, "hangServo");
-        droneServo = hardwareMap.get(Servo.class, "droneServo");
-        adjustServo = hardwareMap.get(Servo.class, "adjustServo");
-        angleServo = hardwareMap.get(Servo.class, "angleServo");
-        delivSensor = hardwareMap.get(NormalizedColorSensor.class, "delivSensor");
+        rCollection = hardwareMap.get(Servo.class, "rCollection");
+        lCollection = hardwareMap.get(Servo.class, "lCollection");
+        rDelivery = hardwareMap.get(Servo.class, "rDelivery");
+        lDelivery = hardwareMap.get(Servo.class, "lDelivery");
+        collection = hardwareMap.get(DcMotorEx.class, "collection");
+        box = hardwareMap.get(Servo.class, "box");
+        hang = hardwareMap.get(DcMotor.class, "hang");
+        hangS = hardwareMap.get(CRServo.class, "hangS");
 
-        collectionMotor.setDirection(DcMotor.Direction.FORWARD);
+        rCollection.setDirection(Servo.Direction.FORWARD);
+        lCollection.setDirection(Servo.Direction.FORWARD);
+        collection.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        hang.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        rotatorServo.setDirection(Servo.Direction.FORWARD);
-        imGoingToDie.setDirection(Servo.Direction.REVERSE);
-        hangMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        collectionMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        hangServo.setDirection(Servo.Direction.FORWARD);
-        droneServo.setDirection(Servo.Direction.FORWARD);
-        imGoingToDie1 = imGoingToDie2;
-        imAboutToDie1 = imAboutToDie2;
+        rDelivery.setDirection(Servo.Direction.FORWARD);
+        lDelivery.setDirection(Servo.Direction.REVERSE);
+
         //   colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
     }
 
@@ -83,70 +71,61 @@ public class Collection {
 
     }
 
-    public void setCollectionPosition() {
+    public void teleopControls() {
 
-        if (theOpMode.gamepad2.dpad_left || theOpMode.gamepad1. dpad_left) {
-            rotServo.setPosition(0);
-        } else if (theOpMode.gamepad2.dpad_right || theOpMode.gamepad1.dpad_right) {
-            rotServo.setPosition(0.22);
+        if(theOpMode.gamepad1.dpad_up) {
+        rDelivery.setPosition(.86);
+    } else if(theOpMode.gamepad1.dpad_down) {
+        rDelivery.setPosition(.16);
+    }
+        //Open
+        if (theOpMode.gamepad2.a || theOpMode.gamepad1.left_bumper) {
+            rCollection.setPosition(.6);
+            lCollection.setPosition(.39);
         }
-        if (theOpMode.gamepad2.right_bumper) {
-            adjustServo.setPosition(.2);
-            imAboutToDie.setPosition(.78);
-            imGoingToDie.setPosition(.78);
+        //Close
+        else if (theOpMode.gamepad2.b || theOpMode.gamepad1.right_bumper) {
+            rCollection.setPosition(.5);
+            lCollection.setPosition(.52);
         }
-        if (theOpMode.gamepad2.left_bumper) {
-            adjustServo.setPosition(.8);
-
+        if (theOpMode.gamepad1.y || theOpMode.gamepad2.y) {
+            collection.setPower(.4);
         }
-        if (theOpMode.gamepad1.dpad_up) {
-            imAboutToDie.setPosition(.86);
-            imGoingToDie.setPosition(.86);
-        } else if (theOpMode.gamepad1.dpad_down) {
-            imAboutToDie.setPosition(.56);
-            imGoingToDie.setPosition(.56);
-        }
-        collectionMotor.setPower(-theOpMode.gamepad2.right_stick_y * .5);
-        if (theOpMode.gamepad1.x) {
-            imAboutToDie.setPosition(1);
-            imGoingToDie.setPosition(1);
-
-        }
-        if (theOpMode.gamepad1.ps) {
-            rotServo.setPosition(.22);
-        }
-
-        if (theOpMode.gamepad1.right_bumper) {
-            hangMotor.setPower(-.7);
-        }
-        else if (theOpMode.gamepad1.left_bumper) {
-            hangMotor.setPower(.7);
+        else if (theOpMode.gamepad1.x || theOpMode.gamepad2.x) {
+            collection.setPower(-.25);
         }
         else {
-            hangMotor.setPower(theOpMode.gamepad2.left_stick_y * .7);
+            collection.setPower(0);
         }
-        collectionMotor.setPower(-theOpMode.gamepad2.right_trigger);
-        if (theOpMode.gamepad2.left_trigger > .1) {
-            collectionMotor.setPower(theOpMode.gamepad2.left_trigger);
+        if (theOpMode.gamepad1.dpad_left || theOpMode.gamepad2.dpad_left) {
+            box.setPosition(.1);
         }
-        if (theOpMode.gamepad2.y) {
-            rotatorServo.setPosition(.56);
+        else if (theOpMode.gamepad1.dpad_right || theOpMode.gamepad2.dpad_right) {
+            box.setPosition(.85);
         }
-        else if (theOpMode.gamepad2.a) {
-            rotatorServo.setPosition(.85);
+        if (theOpMode.gamepad2.left_bumper) {
+            hang.setPower(.6);
         }
-        else if (theOpMode.gamepad2.b) {
-            rotatorServo.setPosition(0.01);
+        else if (theOpMode.gamepad2.right_bumper) {
+            hang.setPower(-.6);
         }
-        if (theOpMode.gamepad2.x) {
-            hangServo.setPosition(0);
+        else {
+            hang.setPower(0);
         }
+
         if (theOpMode.gamepad2.dpad_up) {
-            droneServo.setPosition(.7);
+            hangS.setPower(.9);
         }
-        if (theOpMode.gamepad2.dpad_down) {
-            angleServo.setPosition(.2);
+        else if (theOpMode.gamepad2.dpad_down) {
+            hangS.setPower(-.9);
         }
+        else {
+            hangS.setPower(0);
+        }
+
+}
+
+
 
 
 
@@ -163,7 +142,7 @@ public class Collection {
 
              */
 
-    }
+
 //        else {
 //            collectionMotor.setTargetPosition(collectionMotor.getCurrentPosition());
 //
@@ -180,7 +159,7 @@ public class Collection {
 
 
 //}
-
+/*
 
     public void openBox(double clawPos, double timeoutS) {
         runtime.reset();
@@ -311,4 +290,6 @@ public class Collection {
     public void collectionEnd() {
         hangMotor.setPower(0);
     }
+
+ */
 }
