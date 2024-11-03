@@ -48,13 +48,13 @@ public class Lift {
         leftMotor.setPower(theOpMode.gamepad2.right_stick_y);
         rightMotor.setPower(-theOpMode.gamepad2.right_stick_y);
 
-        if (theOpMode.gamepad1.left_trigger > .05) {
-            leftMotor.setPower(-theOpMode.gamepad1.left_trigger);
-            rightMotor.setPower(theOpMode.gamepad1.left_trigger);
+        if (theOpMode.gamepad2.left_trigger > .05) {
+            leftMotor.setPower(-theOpMode.gamepad2.left_trigger);
+            rightMotor.setPower(theOpMode.gamepad2.left_trigger);
         }
-        if (theOpMode.gamepad1.right_trigger > .05) {
-            leftMotor.setPower(theOpMode.gamepad1.right_trigger);
-            rightMotor.setPower(-theOpMode.gamepad1.right_trigger);
+        if (theOpMode.gamepad2.right_trigger > .05) {
+            leftMotor.setPower(theOpMode.gamepad2.right_trigger);
+            rightMotor.setPower(-theOpMode.gamepad2.right_trigger);
         }
     }
 

@@ -12,6 +12,12 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.acmerobotics.roadrunner.ftc.Actions;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import androidx.annotation.NonNull;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 public class Collection3d {
     private ElapsedTime runtime = new ElapsedTime();
@@ -23,6 +29,8 @@ public class Collection3d {
     CRServo hangS;
     DcMotor collection;
     DcMotor hang;
+    DigitalChannel cBeam;
+
 
 
     private OpMode theOpMode;
@@ -45,6 +53,12 @@ public class Collection3d {
 
         rDelivery.setDirection(Servo.Direction.FORWARD);
         lDelivery.setDirection(Servo.Direction.REVERSE);
+
+        cBeam = hardwareMap.get(DigitalChannel.class, "beam");
+
+        cBeam.setMode(DigitalChannel.Mode.INPUT);
+
+
 
         //   colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
     }
@@ -73,26 +87,26 @@ public class Collection3d {
 
     public void teleopControls() {
 
-        if(theOpMode.gamepad1.dpad_up) {
-        rDelivery.setPosition(.86);
-    } else if(theOpMode.gamepad1.dpad_down) {
-        rDelivery.setPosition(.16);
+        if(theOpMode.gamepad1.dpad_down || theOpMode.gamepad2.dpad_down) {
+        rDelivery.setPosition(.4);
+    } else if(theOpMode.gamepad1.dpad_up || theOpMode.gamepad2.dpad_up) {
+        rDelivery.setPosition(.7);
     }
         //Open
-        if (theOpMode.gamepad2.a || theOpMode.gamepad1.left_bumper) {
+        if (theOpMode.gamepad1.left_bumper) {
             rCollection.setPosition(.6);
-            lCollection.setPosition(.39);
+            lCollection.setPosition(.41);
         }
         //Close
-        else if (theOpMode.gamepad2.b || theOpMode.gamepad1.right_bumper) {
-            rCollection.setPosition(.5);
-            lCollection.setPosition(.52);
+        else if (theOpMode.gamepad1.right_bumper) {
+            rCollection.setPosition(.59);
+            lCollection.setPosition(.46);
         }
-        if (theOpMode.gamepad1.y || theOpMode.gamepad2.y) {
-            collection.setPower(.4);
+        if (theOpMode.gamepad1.x || theOpMode.gamepad2.x) {
+            collection.setPower(.5);
         }
-        else if (theOpMode.gamepad1.x || theOpMode.gamepad2.x) {
-            collection.setPower(-.25);
+        else if (theOpMode.gamepad1.y || theOpMode.gamepad2.y) {
+            collection.setPower(-.75);
         }
         else {
             collection.setPower(0);
@@ -103,30 +117,55 @@ public class Collection3d {
         else if (theOpMode.gamepad1.dpad_right || theOpMode.gamepad2.dpad_right) {
             box.setPosition(.85);
         }
-        if (theOpMode.gamepad2.left_bumper) {
+        if (theOpMode.gamepad2.a) {
             hang.setPower(.6);
         }
-        else if (theOpMode.gamepad2.right_bumper) {
+        else if (theOpMode.gamepad2.b) {
             hang.setPower(-.6);
         }
         else {
             hang.setPower(0);
         }
 
-        if (theOpMode.gamepad2.dpad_up) {
+        if (theOpMode.gamepad2.left_bumper) {
             hangS.setPower(.9);
         }
-        else if (theOpMode.gamepad2.dpad_down) {
+        else if (theOpMode.gamepad2.right_bumper) {
             hangS.setPower(-.9);
         }
         else {
             hangS.setPower(0);
         }
+        if (cBeam.getState() == false) {
+            theOpMode.telemetry.addData("Beam", "Broken");
+        } else {
+            theOpMode.telemetry.addData("Beam", "NOT Broken");
+        }
+
+        theOpMode.telemetry.update();
 
 }
 
 
+public class CollectionAuto implements Action {
+    private boolean initialized = false;
+    @Override
+    public boolean run(@NonNull TelemetryPacket packet) {
+        if (!initialized) {
+            collection.setPower(0.8);
+            initialized = true;
+        }
 
+        double pos = collection.getCurrentPosition();
+        packet.put("collectionPos", pos);
+        if (pos < 3000.0) {
+            return true;
+        } else {
+            collection.setPower(0);
+            return false;
+        }
+    }
+}
 
 
 

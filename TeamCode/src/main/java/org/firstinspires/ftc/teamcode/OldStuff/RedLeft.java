@@ -8,23 +8,12 @@ import java.util.ArrayList;
 @Autonomous
 public class RedLeft extends LinearOpMode {
 
-    private int codePosition;
-    private SpikeMarkDetection.spikeMarkPositions position;
-
     public void runOpMode() {
-        //  String tempString = "";
 
         Lift lift = new Lift(hardwareMap, this, 537.5, 1, 2);
-        Scanner scanner = new Scanner(hardwareMap, this);
-        Drivetrain driveTrain = new Drivetrain(hardwareMap, this, 145.1, 1, 4.0);
-        //  Collection collection = new Collection(hardwareMap, this);
-        SpikeMarkDetection spikeMarkDetection = new SpikeMarkDetection(hardwareMap, this);
-        position = spikeMarkDetection.detectPosition(true);
-//        collection.imAboutToDie.setPosition(.55);
-//        collection.imGoingToDie.setPosition(.55);
+        ri3d ri3d = new ri3d(hardwareMap, this, 384.5, 1, 4.0);
 
         waitForStart();
-        position = spikeMarkDetection.detectPosition(true);
     }
 }
         /*driveTrain.encoderDrive(.2,-22,3);

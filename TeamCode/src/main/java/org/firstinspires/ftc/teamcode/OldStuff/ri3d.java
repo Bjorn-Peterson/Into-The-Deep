@@ -991,224 +991,6 @@ public class ri3d {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public void awDrive(double leftDrives, double rightDrives, double leftBackDrives, double rightBackDrives, double inches, int timeoutS) {
-        int newLeftTarget;
-        int newRightTarget;
-        int newLeftBackTarget;
-        int newRightBackTarget;
-
-
-        // Determine new target position, and pass to motor controller
-        newLeftTarget = leftDrive.getCurrentPosition() + (int) (inches * countsPerInch);
-        newLeftBackTarget = leftBackDrive.getCurrentPosition() + (int) (inches * countsPerInch);
-        newRightTarget = rightDrive.getCurrentPosition() + (int) (inches * countsPerInch);
-        newRightBackTarget = rightBackDrive.getCurrentPosition() + (int) (inches * countsPerInch);
-
-        leftDrive.setTargetPosition(newLeftTarget);
-        rightDrive.setTargetPosition(newRightTarget);
-        leftBackDrive.setTargetPosition(newLeftBackTarget);
-        rightBackDrive.setTargetPosition(newRightBackTarget);
-
-        // Turn On RUN_TO_POSITION
-        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // reset the timeout time and start motion.
-        runtime.reset();
-        leftDrive.setPower(Math.abs(leftDrives));
-        rightDrive.setPower(Math.abs(rightDrives));
-        leftBackDrive.setPower(Math.abs(leftBackDrives));
-        rightBackDrive.setPower(Math.abs(rightBackDrives));
-
-        while (((LinearOpMode)theOpMode).opModeIsActive() &&
-                (runtime.seconds() < timeoutS) &&
-                (leftDrive.isBusy() && rightDrive.isBusy() && leftBackDrive.isBusy() && rightBackDrive.isBusy())) {
-
-            // Display it for the driver.
-            theOpMode.telemetry.addData("Running to", " %7d :%7d, %7d, %7d", newLeftTarget, newRightTarget, newLeftBackTarget, newRightBackTarget);
-            theOpMode.telemetry.addData("Currently at", " at %7d :%7d, %7d, %7d",
-                    leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
-            theOpMode.telemetry.update();
-        }
-
-        // Stop all motion;
-        leftDrive.setPower(-leftDrives);
-        rightDrive.setPower(-rightDrives);
-        leftBackDrive.setPower(-leftBackDrives);
-        rightBackDrive.setPower(-rightBackDrives);
-        // Turn off RUN_TO_POSITION
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftDrive.setPower(0);
-        rightDrive.setPower(0);
-        leftBackDrive.setPower(0);
-        rightBackDrive.setPower(0);
-
-    }
-
-    public void aDrive(double leftDrives, double rightDrives, double leftBackDrives, double rightBackDrives, double timeoutS) {
-
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // reset the timeout time and start motion.
-        runtime.reset();
-        leftDrive.setPower((leftDrives));
-        rightDrive.setPower((rightDrives));
-        leftBackDrive.setPower((leftBackDrives));
-        rightBackDrive.setPower((rightBackDrives));
-
-        while (((LinearOpMode)theOpMode).opModeIsActive() &&
-                (runtime.seconds() < timeoutS)) {
-
-            // Display it for the driver.
-
-        }
-
-        // Stop all motion;
-        leftDrive.setPower(-leftDrives);
-        rightDrive.setPower(-rightDrives);
-        leftBackDrive.setPower(-leftBackDrives);
-        rightBackDrive.setPower(-rightBackDrives);
-        // Turn off RUN_TO_POSITION
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftDrive.setPower(0);
-        rightDrive.setPower(0);
-        leftBackDrive.setPower(0);
-        rightBackDrive.setPower(0);
-
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    void driveWithPID(double targetAngle, double timeoutS) {
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        TurnPIDController pid = new TurnPIDController(targetAngle, 0.04, 0.00000000008, 0.000001);
-        //theOpMode.telemetry.setMsTransmissionInterval(50);
-        double degreeCount = 0;
-        runtime.reset();
-        // Checking lastSlope to make sure that it's not oscillating when it quits
-        while ((Math.abs(targetAngle - getAbsoluteAngle()) > 1 || pid.getLastSlope() > 1.25 || degreeCount < 4) && runtime.seconds() < timeoutS) {
-            if (Math.abs(targetAngle - getAbsoluteAngle()) < 1){
-                degreeCount +=1;
-            }
-            double motorSpeed = pid.update(getAbsoluteAngle());
-            leftDrive.setPower(motorSpeed);
-            rightDrive.setPower(motorSpeed);
-            leftBackDrive.setPower(motorSpeed);
-            rightBackDrive.setPower(motorSpeed);
-            theOpMode.telemetry.addData("degreeCount", degreeCount);
-            theOpMode.telemetry.addData("Current Angle", getAbsoluteAngle());
-            theOpMode.telemetry.addData("Target Angle", targetAngle);
-            theOpMode.telemetry.addData("Slope", pid.getLastSlope());
-            theOpMode.telemetry.addData("Power", motorSpeed);
-            theOpMode.telemetry.update();
-        }
-        leftDrive.setPower(0);
-        rightDrive.setPower(0);
-        leftBackDrive.setPower(0);
-        rightBackDrive.setPower(0);
-    }
-
-
-
-
-
-
-
-
-
-
-
-
     public void DriverControls() {
         if (theOpMode.gamepad1.y){
             upFlag = true;
@@ -1238,6 +1020,7 @@ public class ri3d {
 
     }
     public void UpdateDriveTrain() {
+        drvTrnSpd = 1;
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1284,7 +1067,7 @@ public class ri3d {
         }
         double y = theOpMode.gamepad1.left_stick_y; // Remember, this is reversed!
         double x = -theOpMode.gamepad1.left_stick_x; // Counteract imperfect strafing
-        double rx = -theOpMode.gamepad1.right_stick_x*.7;
+        double rx = -theOpMode.gamepad1.right_stick_x;
 
         // Read inverse IMU heading, as the IMU heading is CW positive
 
@@ -1304,9 +1087,9 @@ public class ri3d {
         double backRightPower = (rotY + rotX - rx) / denominator;
 
 
-        leftDrive.setPower(frontLeftPower*drvTrnSpd * .9);
+        leftDrive.setPower(frontLeftPower*drvTrnSpd);
         leftBackDrive.setPower(backLeftPower*drvTrnSpd);
-        rightDrive.setPower(frontRightPower*drvTrnSpd * .9);
+        rightDrive.setPower(frontRightPower*drvTrnSpd);
         rightBackDrive.setPower(backRightPower*drvTrnSpd);
 
 

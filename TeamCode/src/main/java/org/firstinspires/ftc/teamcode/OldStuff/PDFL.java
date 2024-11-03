@@ -3,8 +3,10 @@ package org.firstinspires.ftc.teamcode.OldStuff;
 import java.lang.Math;
 import java.sql.Time;
 
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class PDFL{
 
@@ -17,18 +19,20 @@ public class PDFL{
     private double homedConstant;
 
     private boolean homed = false;
-    DcMotorEx lift;
-
+    DcMotorEx collection;
     double countsPerInch;
   //  private Timer timer = new Timer();
     ElapsedTime timer = new ElapsedTime();
 
     private RingBuffer<Double> timeBuffer = new RingBuffer<Double>(3, 0.0);
     private RingBuffer<Double> errorBuffer = new RingBuffer<Double>(3, 0.0);
+    private OpMode theOpMode;
 
-
-    public PDFL(double kP, double kD, double kF, double kL, double encoderTicksPerRev, double gearRatio, double wheelDiameter){
+    public PDFL(double kP, double kD, double kF, double kL, HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter){
+        theOpMode = opMode;
         countsPerInch = (encoderTicksPerRev * gearRatio) / (wheelDiameter * 3.14);
+        collection = hardwareMap.get(DcMotorEx.class, "collection");
+
 
         this.kP = kP;
         this.kD = kD;
@@ -87,11 +91,11 @@ public class PDFL{
         double f = fComponenet();
         double l = lComponent(error);
 
-        double response = p + d + f + l;
+        double response = (p + d + f + l) * countsPerInch;
 
         if (Math.abs(error) < deadzone){
             //same response but without lower limit
-            response = p + d + f;
+            response = (p + d + f) * countsPerInch;
         }
 
         return response;
