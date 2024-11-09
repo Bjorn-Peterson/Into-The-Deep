@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
 
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -58,50 +59,26 @@ public class Collection3d {
 
         cBeam.setMode(DigitalChannel.Mode.INPUT);
 
-
-
-        //   colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
-    }
-
-    public void collectionTeleop() {
-        /*
-        if(theOpMode.gamepad2.y &&!theOpMode.gamepad2.x) {
-            collectionMotor.setPower(-.4);
-            collectionMotor.setTargetPosition(100);
-            collectionMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        }
-        else if(!theOpMode.gamepad2.y && theOpMode.gamepad2.x)
-
-        {
-            collectionMotor.setPower(.4);
-            collectionMotor.setTargetPosition(5);
-        }
-        else {
-            collectionMotor.setTargetPosition(collectionMotor.getCurrentPosition());
-        }
-
-         */
-
     }
 
     public void teleopControls() {
 
-        if(theOpMode.gamepad1.dpad_down || theOpMode.gamepad2.dpad_down) {
+        if(theOpMode.gamepad1.dpad_up || theOpMode.gamepad2.dpad_up) {
         rDelivery.setPosition(.4);
-    } else if(theOpMode.gamepad1.dpad_up || theOpMode.gamepad2.dpad_up) {
+    } else if(theOpMode.gamepad1.dpad_down || theOpMode.gamepad2.dpad_down) {
         rDelivery.setPosition(.7);
     }
         //Open
         if (theOpMode.gamepad1.left_bumper) {
-            rCollection.setPosition(.6);
-            lCollection.setPosition(.41);
+            rCollection.setPosition(.71);
+            lCollection.setPosition(.31);
         }
         //Close
         else if (theOpMode.gamepad1.right_bumper) {
-            rCollection.setPosition(.59);
+            rCollection.setPosition(.61);
             lCollection.setPosition(.46);
         }
+        /*
         if (theOpMode.gamepad1.x || theOpMode.gamepad2.x) {
             collection.setPower(.5);
         }
@@ -111,6 +88,8 @@ public class Collection3d {
         else {
             collection.setPower(0);
         }
+
+         */
         if (theOpMode.gamepad1.dpad_left || theOpMode.gamepad2.dpad_left) {
             box.setPosition(.1);
         }
@@ -136,14 +115,14 @@ public class Collection3d {
         else {
             hangS.setPower(0);
         }
+        /*
         if (cBeam.getState() == false) {
             theOpMode.telemetry.addData("Beam", "Broken");
         } else {
             theOpMode.telemetry.addData("Beam", "NOT Broken");
         }
 
-        theOpMode.telemetry.update();
-
+         */
 }
 
 

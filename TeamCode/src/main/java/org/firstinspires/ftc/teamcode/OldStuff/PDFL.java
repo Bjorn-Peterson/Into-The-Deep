@@ -14,7 +14,7 @@ public class PDFL{
 
     private double kP, kD, kF, kL;
 
-    private double deadzone;
+    private double deadzone = 5;
 
     private double homedConstant;
 

@@ -1025,41 +1025,7 @@ public class ri3d {
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-  /*angles = imu.getAngularOrientation
-          (AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
-  double speed = Math.hypot
-          (theOpMode.gamepad1.left_stick_x, theOpMode.gamepad1.left_stick_y);
-  double angle = Math.atan2
-          (theOpMode.gamepad1.left_stick_y, theOpMode.gamepad1.left_stick_x) - (Math.PI/4);
-  angle += angles.firstAngle - (Math.PI)/2 + STARTING_HEADING;
-  double turnPower = theOpMode.gamepad1.right_stick_x;
-  if(turnPower == 0){
-      if (count < 10) {
-          angleTest[count] = angle;
-          angleTest[count] = angle;
-          count++;
-      }
-      else {
-          average = (angleTest[1] + angleTest[2] + angleTest[3] + angleTest[4] + angleTest[0]
-                  + angleTest[5] + angleTest[6] + angleTest[7] + angleTest[8]
-                  + angleTest[9])/10;
-          if(average > angle){
-              correct = average - angle;
-              angle = angle + correct;
-          }
-          else if(angle > average){
-              correct = angle - average;
-              angle = angle - correct;
-          }
-          count = 0;
-      }
-  }
-  if (!autoTurnEnabled) {
-      leftDrive.setPower((((speed * -(Math.sin(angle)) + turnPower))) * drvTrnSpd);
-      leftBackDrive.setPower((((speed * -(Math.cos(angle)) + turnPower))) * drvTrnSpd);
-      rightDrive.setPower((((speed * (Math.cos(angle))) + turnPower)) * drvTrnSpd);
-      rightBackDrive.setPower((((speed * (Math.sin(angle))) + turnPower)) * drvTrnSpd);
-  }*/
+        
         AbsoluteValue = -imuCH.getAngularOrientation().firstAngle;
         if (theOpMode.gamepad1.b) {
             ZeroPosition = AbsoluteValue;
