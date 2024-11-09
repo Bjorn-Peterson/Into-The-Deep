@@ -4,6 +4,7 @@ import java.lang.Math;
 import java.sql.Time;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -32,6 +33,8 @@ public class PDFL{
         theOpMode = opMode;
         countsPerInch = (encoderTicksPerRev * gearRatio) / (wheelDiameter * 3.14);
         collection = hardwareMap.get(DcMotorEx.class, "collection");
+        collection.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        collection.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
         this.kP = kP;
@@ -91,13 +94,13 @@ public class PDFL{
         double f = fComponenet();
         double l = lComponent(error);
 
-        double response = (p + d + f + l) * countsPerInch;
+        double response = (p + d + f + l);
 
         if (Math.abs(error) < deadzone){
             //same response but without lower limit
-            response = (p + d + f) * countsPerInch;
+            response = (p + d + f);
         }
-
+        collection.setPower(response);
         return response;
     }
 

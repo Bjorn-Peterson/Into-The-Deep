@@ -18,8 +18,6 @@ public class Lift {
     private DistanceSensor sensorRange;
     private ElapsedTime runtime = new ElapsedTime();
     private OpMode theOpMode;
-    private int teleopLiftHeight = 0;
-    private double targetHeight = 0;
     double countsPerInch;
     private double kp = 0.1;
     private double ki = 0.01;

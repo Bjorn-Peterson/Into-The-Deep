@@ -48,4 +48,12 @@ public class PIDF {
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.update();
     }
+    public void auto(double target) {
+        controller.setPID(p,i,d);
+        int armPos = collection.getCurrentPosition();
+        double pid = controller.calculate(armPos, target);
+        double ff = Math.cos(Math.toRadians(target / ticks_in_degree)) * f;
+        double power = pid + ff;
+        collection.setPower(power);
+    }
 }

@@ -26,9 +26,11 @@ public class PDFLTeleop extends OpMode {
     @Override
     public void loop() {
       //  ri3d.UpdateDriveTrain();
-       // pdfl.run(3);
+        if (gamepad1.a) {
+            pdfl.run(50);
+        }
        // ri3d.DriverControls();
-        collection3d.teleopControls();
+      //  collection3d.teleopControls();
 
 
 
