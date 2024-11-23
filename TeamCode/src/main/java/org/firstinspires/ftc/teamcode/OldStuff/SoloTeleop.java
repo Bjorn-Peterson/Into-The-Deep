@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.teamcode.NewRobot.Lift;
 
 //https:www.youtube.com/watch?v=pQ_aVTM9qX0
 @TeleOp(name = "SoloTele", group = "Iterative Opmode")
@@ -31,7 +32,7 @@ public class SoloTeleop extends OpMode {
         collection3d.teleopControls();
         //lift.teleLift();
         collection3d = new Collection3d(hardwareMap, this);
-        pidf.tele();
+       // pidf.tele();
         lift.soloControls();
 
 

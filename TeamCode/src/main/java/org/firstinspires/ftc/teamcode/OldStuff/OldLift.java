@@ -1,21 +1,14 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
 
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import java.util.ArrayList;
 
-public class Lift {
-    private DcMotor leftMotor;
-    private DcMotor rightMotor;
-    private DistanceSensor sensorRange;
+public class OldLift {
+    public DcMotor leftMotor;
+    public DcMotor rightMotor;
     private ElapsedTime runtime = new ElapsedTime();
     private OpMode theOpMode;
     double countsPerInch;
@@ -30,7 +23,7 @@ public class Lift {
 
 
 
-    public Lift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
+    public OldLift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
         countsPerInch = (encoderTicksPerRev * gearRatio) / (wheelDiameter * 3.14);
         theOpMode = opMode;
         leftMotor = hardwareMap.get(DcMotor.class, "leftMotor");
@@ -85,12 +78,13 @@ public class Lift {
         leftMotor.setPower(power);
         rightMotor.setPower(power);
         leftMotor.setTargetPosition(target);
-        leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         while (((LinearOpMode) theOpMode).opModeIsActive() && runtime.seconds() < timeoutS && leftMotor.isBusy()) {
 //            leftMotor.setPower(power);
 //            leftMotor.setTargetPosition(leftMotor.getCurrentPosition());
-//            theOpMode.telemetry.addData("power", power);
-//            theOpMode.telemetry.update();
+            theOpMode.telemetry.addData("target", target);
+            theOpMode.telemetry.addData("Current Position", leftMotor.getCurrentPosition());
+            theOpMode.telemetry.update();
 
         }
         leftMotor.setPower(0);

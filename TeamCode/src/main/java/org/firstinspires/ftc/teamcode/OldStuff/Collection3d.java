@@ -21,17 +21,21 @@ import androidx.annotation.NonNull;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 public class Collection3d {
+    public static double open = .4;
+    public enum collectionState {
+        CLOSED,
+        OPEN
+    }
     private ElapsedTime runtime = new ElapsedTime();
-    Servo rCollection;
-    Servo lCollection;
-    Servo rDelivery;
-    Servo lDelivery;
+    public Servo rCollection;
+    public Servo lCollection;
+    public Servo rDelivery;
+    public Servo lDelivery;
     Servo box;
     CRServo hangS;
     DcMotor collection;
     DcMotor hang;
     DigitalChannel cBeam;
-
 
 
     private OpMode theOpMode;
@@ -59,57 +63,58 @@ public class Collection3d {
     }
 
     public void teleopControls() {
-
-        if(theOpMode.gamepad1.dpad_up || theOpMode.gamepad2.dpad_up) {
+        //Deliver
+        if (theOpMode.gamepad1.dpad_up || theOpMode.gamepad2.dpad_up) {
             rDelivery.setPosition(.4);
-        } else if(theOpMode.gamepad1.dpad_down || theOpMode.gamepad2.dpad_down) {
-            rDelivery.setPosition(.7);
+        }
+        //Return
+        else if (theOpMode.gamepad1.dpad_down || theOpMode.gamepad2.dpad_down) {
+            rDelivery.setPosition(.8);
         }
         //Open
         if (theOpMode.gamepad1.left_bumper) {
-            rCollection.setPosition(.71);
-            lCollection.setPosition(.31);
+            rCollection.setPosition(.72);
+            lCollection.setPosition(.33);
         }
         //Close
         else if (theOpMode.gamepad1.right_bumper) {
-            rCollection.setPosition(.61);
-            lCollection.setPosition(.46);
+            rCollection.setPosition(.62);
+            lCollection.setPosition(.42);
         }
-        /*
-        if (theOpMode.gamepad1.x || theOpMode.gamepad2.x) {
+
+
+
+        if (theOpMode.gamepad1.y || theOpMode.gamepad2.y) {
             collection.setPower(.5);
         }
-        else if (theOpMode.gamepad1.y || theOpMode.gamepad2.y) {
-            collection.setPower(-.75);
+        else if (theOpMode.gamepad1.x || theOpMode.gamepad2.x) {
+            collection.setPower(-.6);
         }
         else {
             collection.setPower(0);
         }
 
-         */
+
+
+
         if (theOpMode.gamepad1.dpad_left || theOpMode.gamepad2.dpad_left) {
             box.setPosition(.1);
-        }
-        else if (theOpMode.gamepad1.dpad_right || theOpMode.gamepad2.dpad_right) {
+        } else if (theOpMode.gamepad1.dpad_right || theOpMode.gamepad2.dpad_right) {
             box.setPosition(.85);
         }
         if (theOpMode.gamepad2.a) {
             hang.setPower(.6);
-        }
-        else if (theOpMode.gamepad2.b) {
+        } else if (theOpMode.gamepad2.b) {
             hang.setPower(-.6);
-        }
-        else {
+        } else {
             hang.setPower(0);
         }
 
         if (theOpMode.gamepad2.left_bumper) {
             hangS.setPower(.9);
-        }
-        else if (theOpMode.gamepad2.right_bumper) {
+        } else if (theOpMode.gamepad2.right_bumper) {
             hangS.setPower(-.9);
-        }
-        else {
+        } else {
             hangS.setPower(0);
         }
         /*
@@ -122,19 +127,30 @@ public class Collection3d {
          */
     }
 
-    public void openClaw() {
-        rCollection.setPosition(.71);
-        lCollection.setPosition(.31);
-    }
-    public void closeClaw() {
-        rCollection.setPosition(.61);
-        lCollection.setPosition(.46);
-    }
-    public void deliver() {
-        rDelivery.setPosition(.7);
-    }
-    public void collect() {
-        rDelivery.setPosition(.4);
+    public void colState(collectionState state) {
+        switch (state) {
+            case OPEN:
+                rCollection.setPosition(.72);
+                lCollection.setPosition(.33);
+                break;
+            case CLOSED:
+                rCollection.setPosition(.62);
+                lCollection.setPosition(.42);
+                break;
+        }
 
+    }
+
+    public void arm(double power, int target, double timeoutS) {
+        runtime.reset();
+        int targetPos = collection.getCurrentPosition() + (target * 100);
+        collection.setTargetPosition(targetPos);
+        collection.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        collection.setPower(Math.abs(power));
+        while (((LinearOpMode) theOpMode).opModeIsActive() && runtime.seconds() < timeoutS && collection.isBusy()) {
+
+        }
+        collection.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        collection.setPower(0);
     }
 }

@@ -8,10 +8,31 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 public class PDFL{
+    public enum ExtendState {
+        START,
+        RETRACT,
+        MID,
+        EXTEND,
+        EXTENDED
 
-    private double[] liftHeights = {16, 25, 43};
+    }
+    public enum CollectionState {
+        START,
+        TRANSFER,
+        COLLECT
+    }
+    public enum DeliveryState {
+        START,
+        COLLECT,
+        SPECIMEN,
+        SAMPLE
+    }
+    ExtendState extendState = ExtendState.START;
+    CollectionState collectionState = CollectionState.START;
+    DeliveryState deliveryState = DeliveryState.START;
 
     private double kP, kD, kF, kL;
 
@@ -20,8 +41,12 @@ public class PDFL{
     private double homedConstant;
 
     private boolean homed = false;
+    DcMotorEx extend;
     DcMotorEx collection;
-    double countsPerInch;
+    public Servo rCollection;
+    public Servo lCollection;
+    public Servo claw;
+    public Servo deliveryS;    double countsPerInch;
   //  private Timer timer = new Timer();
     ElapsedTime timer = new ElapsedTime();
 
@@ -29,12 +54,26 @@ public class PDFL{
     private RingBuffer<Double> errorBuffer = new RingBuffer<Double>(3, 0.0);
     private OpMode theOpMode;
 
+
+
+     int extended;
+     int retracted;
+     int mid;
+     double collect;
+
     public PDFL(double kP, double kD, double kF, double kL, HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter){
         theOpMode = opMode;
         countsPerInch = (encoderTicksPerRev * gearRatio) / (wheelDiameter * 3.14);
+        extend = hardwareMap.get(DcMotorEx.class, "extend");
+        extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        lCollection = hardwareMap.get(Servo.class, "lCollection");
+        rCollection = hardwareMap.get(Servo.class, "rCollection");
+        claw = hardwareMap.get(Servo.class, "claw");
+        deliveryS = hardwareMap.get(Servo.class, "delivery");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
-        collection.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        collection.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+
 
 
         this.kP = kP;
@@ -70,6 +109,9 @@ public class PDFL{
 
 
     public double run(double error){
+        extended = (int) (error * countsPerInch * 15);
+        retracted = (int) (error * countsPerInch * 1);
+        mid = (int) (error * countsPerInch * 8);
 
         if (homed){
             return homedConstant;
@@ -100,7 +142,37 @@ public class PDFL{
             //same response but without lower limit
             response = (p + d + f);
         }
-        collection.setPower(response);
+
+        extend.setPower(response);
+        switch (extendState) {
+            case START:
+
+            if (theOpMode.gamepad1.x) {
+                extend.setTargetPosition(extended);
+                extendState = ExtendState.EXTEND;
+                collection.setPower(.8);
+            }
+            break;
+            case EXTEND:
+                if (Math.abs(extend.getCurrentPosition() * countsPerInch) - extended < 10) {
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+                    extendState = ExtendState.EXTENDED;
+                }
+                break;
+            case EXTENDED:
+                if (lCollection.getPosition() == collect) {
+                    collection.setPower(.7);
+                }
+
+        }
+
+
+
+
+
+
+
         return response;
     }
 

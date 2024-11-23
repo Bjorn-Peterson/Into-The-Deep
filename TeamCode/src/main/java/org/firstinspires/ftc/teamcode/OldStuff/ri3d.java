@@ -29,41 +29,25 @@ public class ri3d {
     private double countsPerInch;
     private ElapsedTime runtime = new ElapsedTime();
     private OpMode theOpMode;
-    private DistanceSensor leftSensorRange;
-    private DistanceSensor rightSensorRange;
+
     ModernRoboticsI2cRangeSensor rangeSensor;
-    private ModernRoboticsI2cGyro gyroSensor;
-    private DistanceSensor distanceSensor1;
+    DistanceSensor distanceSensor1;
+
     NormalizedColorSensor colorSensor;
-    static final double WHITE_THRESHOLD = 0.5;  // spans between 0.0 - 1.0 from dark to light
-    static final double APPROACH_SPEED = 0.25;
 
     //Teleop Variables
-    Orientation angles;
     BNO055IMU imuCH;
     double drvTrnSpd = .75;
-    float IMUReading = 0;
-    double startingHeadingInRadians = 0;
+
     boolean upFlag = false;
     boolean upPersistent = false;
     boolean downFlag = false;
     boolean downPersistent = false;
-    int count = 0;
-    double[] angleTest = new double[10];
-    double average;
-    double correct;
-    double STARTING_HEADING = 0;
-    boolean autoTurnEnabled = false;
+
     double ZeroPosition = Math.toRadians(180);
     double AbsoluteValue = 0;
     private Orientation lastAngles = new Orientation();
     private double currAngle = 0.0;
-    static final double INCREMENT   = 0.01;     // amount to ramp motor each CYCLE_MS cycle
-    static final int    CYCLE_MS    =   50;     // period of each cycle
-    static final double MAX_FWD     =  1.0;     // Maximum FWD power applied to motor
-    static final double MAX_REV     = -1.0;     // Maximum REV power applied to motor
-    double  power   = 0;
-    boolean rampUp  = true;
 
 
     public ri3d(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
@@ -226,10 +210,6 @@ public class ri3d {
         }
 
         // Stop all motion;
-        leftDrive.setPower(-speed);
-        rightDrive.setPower(-speed);
-        leftBackDrive.setPower(-speed);
-        rightBackDrive.setPower(-speed);
         // Turn off RUN_TO_POSITION
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -342,10 +322,10 @@ public class ri3d {
 
         // reset the timeout time and start motion.
         runtime.reset();
-        leftDrive.setPower(Math.abs(speed) * .7);
-        rightDrive.setPower(Math.abs(speed) * .7);
-        leftBackDrive.setPower(Math.abs(-speed) * 1.2);
-        rightBackDrive.setPower(Math.abs(-speed) * 1.2);
+        leftDrive.setPower(Math.abs(speed));
+        rightDrive.setPower(Math.abs(speed));
+        leftBackDrive.setPower(Math.abs(-speed));
+        rightBackDrive.setPower(Math.abs(-speed));
 
         while (((LinearOpMode) theOpMode).opModeIsActive() &&
                 (runtime.seconds() < timeoutS) &&
@@ -1025,7 +1005,7 @@ public class ri3d {
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        
+
         AbsoluteValue = -imuCH.getAngularOrientation().firstAngle;
         if (theOpMode.gamepad1.b) {
             ZeroPosition = AbsoluteValue;
