@@ -763,6 +763,7 @@ public class ri3d {
         return colors.alpha;
 
     }
+    /*
     public void resetAngle() {
         lastAngles = imuCH.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         currAngle = 0;
@@ -999,6 +1000,8 @@ public class ri3d {
 
 
     }
+
+     */
     public void UpdateDriveTrain() {
         drvTrnSpd = 1;
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

@@ -6,6 +6,8 @@ import java.sql.Time;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -19,11 +21,7 @@ public class PDFL{
         EXTENDED
 
     }
-    public enum CollectionState {
-        START,
-        TRANSFER,
-        COLLECT
-    }
+
     public enum DeliveryState {
         START,
         COLLECT,
@@ -31,7 +29,7 @@ public class PDFL{
         SAMPLE
     }
     ExtendState extendState = ExtendState.START;
-    CollectionState collectionState = CollectionState.START;
+
     DeliveryState deliveryState = DeliveryState.START;
 
     private double kP, kD, kF, kL;
@@ -46,8 +44,9 @@ public class PDFL{
     public Servo rCollection;
     public Servo lCollection;
     public Servo claw;
-    public Servo deliveryS;    double countsPerInch;
-  //  private Timer timer = new Timer();
+    public Servo deliveryS;
+    double countsPerInch;
+   // private Timer timer = new Timer();
     ElapsedTime timer = new ElapsedTime();
 
     private RingBuffer<Double> timeBuffer = new RingBuffer<Double>(3, 0.0);
@@ -60,18 +59,26 @@ public class PDFL{
      int retracted;
      int mid;
      double collect;
+     double transfer;
+     DigitalChannel cBeam;
 
     public PDFL(double kP, double kD, double kF, double kL, HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter){
         theOpMode = opMode;
         countsPerInch = (encoderTicksPerRev * gearRatio) / (wheelDiameter * 3.14);
         extend = hardwareMap.get(DcMotorEx.class, "extend");
-        extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        extend.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        extend.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        extend.setDirection(DcMotorSimple.Direction.REVERSE);
         lCollection = hardwareMap.get(Servo.class, "lCollection");
         rCollection = hardwareMap.get(Servo.class, "rCollection");
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
+        //collection.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        cBeam = hardwareMap.get(DigitalChannel.class, "beam");
+        cBeam.setMode(DigitalChannel.Mode.INPUT);
+
 
 
 
@@ -109,9 +116,9 @@ public class PDFL{
 
 
     public double run(double error){
-        extended = (int) (error * countsPerInch * 15);
-        retracted = (int) (error * countsPerInch * 1);
-        mid = (int) (error * countsPerInch * 8);
+        extended = (int) (error * 70);
+        retracted = (int) (error * 1);
+        mid = (int) (error * 30);
 
         if (homed){
             return homedConstant;
@@ -142,17 +149,62 @@ public class PDFL{
             //same response but without lower limit
             response = (p + d + f);
         }
+        if (theOpMode.gamepad1.a) {
+            extend.setTargetPosition(400);
+            extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            extend.setPower(.9);
+            //lCollection.setPosition(.63);
+            rCollection.setPosition(.4);
+            collection.setPower(.4);
+        }
+        else if (theOpMode.gamepad1.b) {
+            extend.setTargetPosition(1);
+            extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            extend.setPower(-.9);
+            rCollection.setPosition(.6);
+            collection.setPower(0);
+        }
+/*
 
-        extend.setPower(response);
+        if (theOpMode.gamepad1.x) {
+            extend.setPower(response);
+            extend.setTargetPosition(mid);
+            theOpMode.telemetry.addData("Target Position", mid);
+            theOpMode.telemetry.addData("Current Position", extend.getCurrentPosition());
+            theOpMode.telemetry.update();
+        }
+        if (theOpMode.gamepad1.y) {
+            lCollection.setPosition(.5);
+        }
+        if (theOpMode.gamepad1.a) {
+            rCollection.setPosition(.5);
+        }
+        if (theOpMode.gamepad1.b) {
+            extend.setPower(response);
+            extend.setTargetPosition(retracted);
+            theOpMode.telemetry.addData("Target Position", retracted);
+            theOpMode.telemetry.addData("Current Position", extend.getCurrentPosition());
+            theOpMode.telemetry.update();
+        }
+
+ */
+
+        /*
         switch (extendState) {
             case START:
 
-            if (theOpMode.gamepad1.x) {
-                extend.setTargetPosition(extended);
-                extendState = ExtendState.EXTEND;
-                collection.setPower(.8);
-            }
-            break;
+                if (theOpMode.gamepad1.x) {
+                    extend.setTargetPosition(extended);
+                    extendState = ExtendState.EXTEND;
+                    collection.setPower(.8);
+                } else if (theOpMode.gamepad1.y) {
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+                    extend.setTargetPosition(mid);
+                    extendState = ExtendState.MID;
+                    collection.setPower(.8);
+                }
+                break;
             case EXTEND:
                 if (Math.abs(extend.getCurrentPosition() * countsPerInch) - extended < 10) {
                     rCollection.setPosition(collect);
@@ -161,18 +213,26 @@ public class PDFL{
                 }
                 break;
             case EXTENDED:
-                if (lCollection.getPosition() == collect) {
-                    collection.setPower(.7);
+            case MID:
+                if (!cBeam.getState()) {
+                    collection.setPower(0);
+                    rCollection.setPosition(transfer);
+                    lCollection.setPosition(transfer);
+                    extendState = ExtendState.RETRACT;
+                    extend.setTargetPosition(retracted);
+                    theOpMode.telemetry.addData("Beam", "Broken");
+
+                }
+                break;
+            default:
+                extendState = ExtendState.START;
+        }
+                if (theOpMode.gamepad1.a && extendState !=  ExtendState.START) {
+                    extendState = ExtendState.START;
                 }
 
-        }
 
-
-
-
-
-
-
+         */
         return response;
     }
 
