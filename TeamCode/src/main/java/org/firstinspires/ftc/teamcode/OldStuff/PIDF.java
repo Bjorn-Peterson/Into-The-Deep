@@ -54,6 +54,8 @@ public class PIDF {
     double collect = .3;
     double transfer = .5;
     DigitalChannel cBeam;
+    ElapsedTime rotateTimer = new ElapsedTime();
+    double rotateTime;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -113,7 +115,17 @@ public class PIDF {
 
                 }
                 break;
-            default:
+            case RETRACT:
+                if (Math.abs(extend.getCurrentPosition()) - retracted < 10) {
+                    rCollection.setPosition(transfer);
+                    lCollection.setPosition(transfer);
+                    collection.setPower(.6);
+
+                }
+
+
+
+                    default:
                 extendState = ExtendState.START;
         }
         if (theOpMode.gamepad1.a && extendState !=  ExtendState.START) {
@@ -127,9 +139,10 @@ public class PIDF {
         int curPos = collection.getCurrentPosition();
         double pid = controller.calculate(curPos, target);
         double power = pid;
-        collection.setPower(power);
+        extend.setPower(power);
         theOpMode.telemetry.addData("pos", curPos);
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.update();
+
     }
 }
