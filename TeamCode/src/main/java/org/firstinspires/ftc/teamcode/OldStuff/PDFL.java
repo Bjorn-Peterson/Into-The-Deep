@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 public class PDFL{
-    public enum ExtendState {
+   /* public enum ExtendState {
         START,
         RETRACT,
         MID,
@@ -31,6 +31,8 @@ public class PDFL{
     ExtendState extendState = ExtendState.START;
 
     DeliveryState deliveryState = DeliveryState.START;
+
+    */
 
     private double kP, kD, kF, kL;
 
@@ -116,9 +118,9 @@ public class PDFL{
 
 
     public double run(double error){
-        extended = (int) (error * 70);
-        retracted = (int) (error * 1);
-        mid = (int) (error * 30);
+        extended = (int) (error + 70);
+        retracted = (int) (error + 1);
+        mid = (int) (error + 30);
 
         if (homed){
             return homedConstant;

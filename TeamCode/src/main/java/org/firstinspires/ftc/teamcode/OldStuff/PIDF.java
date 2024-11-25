@@ -11,62 +11,125 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class PIDF {
+    public enum ExtendState {
+        START,
+        RETRACT,
+        MID,
+        EXTEND,
+        EXTENDED
+
+    }
+    public enum DeliveryState {
+        START,
+        COLLECT,
+        SPECIMEN,
+        SAMPLE
+    }
+    ExtendState extendState = ExtendState.START;
+
+    DeliveryState deliveryState = DeliveryState.START;
     private PIDController controller;
     public static double p = 0.004, i = 0, d = 0.0001;
-    public static double f = 0.12;
     public static int target;
-    private final double ticks_in_degree = 100;
-    private DcMotorEx collection;
 
 
     private ElapsedTime runtime = new ElapsedTime();
     private OpMode theOpMode;
+    DcMotorEx extend;
+    DcMotorEx collection;
+    public Servo rCollection;
+    public Servo lCollection;
+    public Servo claw;
+    public Servo deliveryS;
+    double countsPerInch;
+    int extended = 400;
+    int retracted = 1;
+    int mid = 200;
+    double collect = .3;
+    double transfer = .5;
+    DigitalChannel cBeam;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
         controller = new PIDController(p, i, d);
+        extend = hardwareMap.get(DcMotorEx.class, "extend");
+        extend.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        extend.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        extend.setDirection(DcMotorSimple.Direction.REVERSE);
+        lCollection = hardwareMap.get(Servo.class, "lCollection");
+        rCollection = hardwareMap.get(Servo.class, "rCollection");
+        claw = hardwareMap.get(Servo.class, "claw");
+        deliveryS = hardwareMap.get(Servo.class, "delivery");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
-        collection.setDirection(DcMotorSimple.Direction.REVERSE);
-        collection.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        collection.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //collection.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        cBeam = hardwareMap.get(DigitalChannel.class, "beam");
+        cBeam.setMode(DigitalChannel.Mode.INPUT);
     }
 
     public void tele() {
-        if (theOpMode.gamepad1.x) {
-            target = -190;
-        } else if (theOpMode.gamepad1.y) {
-            target = -35;
-        } else if (theOpMode.gamepad1.a) {
-            target = -260;
+        switch (extendState) {
+            case START:
+
+                if (theOpMode.gamepad1.x) {
+                    target = extended;
+                    rCollection.setPosition(transfer);
+                    lCollection.setPosition(transfer);
+                   // extend.setTargetPosition(extended);
+                    extendState = ExtendState.EXTEND;
+                    collection.setPower(.8);
+                } else if (theOpMode.gamepad1.y) {
+                    target = mid;
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+                    //extend.setTargetPosition(mid);
+                    extendState = ExtendState.MID;
+                    collection.setPower(.8);
+                }
+                break;
+            case EXTEND:
+                if (Math.abs(extend.getCurrentPosition()) - extended < 30) {
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+                    extendState = ExtendState.EXTENDED;
+                }
+                break;
+            case EXTENDED:
+            case MID:
+                if (!cBeam.getState()) {
+                    target = retracted;
+                    collection.setPower(0);
+                    rCollection.setPosition(transfer);
+                    lCollection.setPosition(transfer);
+                    extendState = ExtendState.RETRACT;
+                    //extend.setTargetPosition(retracted);
+                    theOpMode.telemetry.addData("Beam", "Broken");
+
+                }
+                break;
+            default:
+                extendState = ExtendState.START;
+        }
+        if (theOpMode.gamepad1.a && extendState !=  ExtendState.START) {
+            rCollection.setPosition(transfer);
+            lCollection.setPosition(transfer);
+            collection.setPower(0);
+            target = retracted;
+            extendState = ExtendState.START;
         }
         controller.setPID(p, i, d);
-        int armPos = collection.getCurrentPosition();
-        double pid = controller.calculate(armPos, target);
-        double ff = Math.cos(Math.toRadians(target / ticks_in_degree)) * f;
-        double power = pid + ff;
+        int curPos = collection.getCurrentPosition();
+        double pid = controller.calculate(curPos, target);
+        double power = pid;
         collection.setPower(power);
-        theOpMode.telemetry.addData("pos", armPos);
+        theOpMode.telemetry.addData("pos", curPos);
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.update();
-    }
-
-    public void auto(double target, double timeoutS) {
-        runtime.reset();
-        controller.setPID(p, i, d);
-        int armPos = collection.getCurrentPosition();
-        double pid = controller.calculate(armPos, target);
-        double ff = Math.cos(Math.toRadians(target / ticks_in_degree)) * f;
-        double power = pid + ff;
-        collection.setPower(power);
-        while (((LinearOpMode) theOpMode).opModeIsActive() && armPos > target &&  runtime.seconds() < timeoutS) {
-            theOpMode.telemetry.addData("pos", armPos);
-            theOpMode.telemetry.addData("target", target);
-            theOpMode.telemetry.update();
-        }
-        collection.setPower(0);
     }
 }
