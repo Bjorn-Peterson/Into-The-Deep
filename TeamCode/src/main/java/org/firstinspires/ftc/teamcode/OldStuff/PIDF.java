@@ -53,9 +53,15 @@ public class PIDF {
     int mid = 200;
     double collect = .3;
     double transfer = .5;
+    double closed = .85;
+    double open = .75;
+    double frontSpec = .5;
+    double backSpec = .9;
+    double transferPos = .2;
     DigitalChannel cBeam;
     ElapsedTime rotateTimer = new ElapsedTime();
     double rotateTime;
+    double transferTimer;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -116,10 +122,14 @@ public class PIDF {
                 }
                 break;
             case RETRACT:
-                if (Math.abs(extend.getCurrentPosition()) - retracted < 10) {
+                if (Math.abs(extend.getCurrentPosition()) - retracted < 10 && !cBeam.getState()) {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                     collection.setPower(.6);
+                    if (rotateTimer.seconds() >= transferTimer) {
+                        claw.setPosition(closed);
+                        deliveryS.setPosition(frontSpec);
+                    }
 
                 }
 
