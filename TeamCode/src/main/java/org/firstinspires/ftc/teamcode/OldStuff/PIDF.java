@@ -61,7 +61,7 @@ public class PIDF {
     DigitalChannel cBeam;
     ElapsedTime rotateTimer = new ElapsedTime();
     double rotateTime;
-    double transferTimer;
+    double transferTimer = .8;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -123,6 +123,7 @@ public class PIDF {
                 break;
             case RETRACT:
                 if (Math.abs(extend.getCurrentPosition()) - retracted < 10 && !cBeam.getState()) {
+                    rotateTimer.reset();
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                     collection.setPower(.6);
