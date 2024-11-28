@@ -33,18 +33,6 @@ public class PDFLTeleop extends OpMode {
         drivetrain.UpdateDriveTrain();
         pidf.tele();
 
-      // pidController.update();
-        //pdfl.run(1);
-
-
-
-
-      //  collection3d.teleopControls();
-
-
-
-
-
     }
 
 

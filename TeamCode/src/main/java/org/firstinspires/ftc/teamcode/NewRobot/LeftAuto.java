@@ -35,7 +35,6 @@ public class LeftAuto extends LinearOpMode {
         TrajectoryActionBuilder tab1 = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(90))
                 .strafeToSplineHeading(new Vector2d(20, 35),Math.toRadians(-45))
-
                 .waitSeconds(3);
         Action trajectoryActionCloseOut = tab1.fresh()
                 .build();

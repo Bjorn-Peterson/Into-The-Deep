@@ -159,7 +159,6 @@ public class PDFL{
             deliveryS.setPosition(.5);
         }
 /*
-
         if (theOpMode.gamepad1.x) {
             extend.setPower(response);
             extend.setTargetPosition(mid);
