@@ -73,6 +73,7 @@ public class PDFL{
         extend.setDirection(DcMotorSimple.Direction.REVERSE);
         lCollection = hardwareMap.get(Servo.class, "lCollection");
         rCollection = hardwareMap.get(Servo.class, "rCollection");
+        rCollection.setDirection(Servo.Direction.REVERSE);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
@@ -152,19 +153,10 @@ public class PDFL{
             response = (p + d + f);
         }
         if (theOpMode.gamepad1.a) {
-            extend.setTargetPosition(400);
-            extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            extend.setPower(.9);
-            //lCollection.setPosition(.63);
-            rCollection.setPosition(.4);
-            collection.setPower(.4);
+           deliveryS.setPosition(.8);
         }
         else if (theOpMode.gamepad1.b) {
-            extend.setTargetPosition(1);
-            extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            extend.setPower(-.9);
-            rCollection.setPosition(.6);
-            collection.setPower(0);
+            deliveryS.setPosition(.5);
         }
 /*
 

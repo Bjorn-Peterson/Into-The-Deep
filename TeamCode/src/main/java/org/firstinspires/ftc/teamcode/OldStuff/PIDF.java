@@ -35,7 +35,7 @@ public class PIDF {
 
     DeliveryState deliveryState = DeliveryState.START;
     private PIDController controller;
-    public static double p = 0.004, i = 0, d = 0.0001;
+    public static double p = 0.01, i = 0, d = 0.0001;
     public static int target;
 
 
@@ -48,16 +48,16 @@ public class PIDF {
     public Servo claw;
     public Servo deliveryS;
     double countsPerInch;
-    int extended = 400;
-    int retracted = 1;
-    int mid = 200;
-    double collect = .3;
-    double transfer = .5;
+    int extended = 650;
+    int retracted = -10;
+    int mid = 400;
+    double collect = .63;
+    double transfer = .54;
     double closed = .85;
     double open = .75;
     double frontSpec = .5;
     double backSpec = .9;
-    double transferPos = .2;
+    double transferPos = .12;
     DigitalChannel cBeam;
     ElapsedTime rotateTimer = new ElapsedTime();
     double rotateTime;
@@ -72,6 +72,7 @@ public class PIDF {
         extend.setDirection(DcMotorSimple.Direction.REVERSE);
         lCollection = hardwareMap.get(Servo.class, "lCollection");
         rCollection = hardwareMap.get(Servo.class, "rCollection");
+        rCollection.setDirection(Servo.Direction.REVERSE);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
@@ -84,15 +85,20 @@ public class PIDF {
     public void tele() {
         switch (extendState) {
             case START:
+                rCollection.setPosition(transfer);
+                lCollection.setPosition(transfer);
+                deliveryS.setPosition(transferPos);
+
 
                 if (theOpMode.gamepad1.x) {
                     target = extended;
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
-                   // extend.setTargetPosition(extended);
+                    // extend.setTargetPosition(extended);
                     extendState = ExtendState.EXTEND;
                     collection.setPower(.8);
-                } else if (theOpMode.gamepad1.y) {
+                }
+                if (theOpMode.gamepad1.y) {
                     target = mid;
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
@@ -102,7 +108,7 @@ public class PIDF {
                 }
                 break;
             case EXTEND:
-                if (Math.abs(extend.getCurrentPosition()) - extended < 30) {
+                if (Math.abs(extend.getCurrentPosition() - extended) < 30) {
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
                     extendState = ExtendState.EXTENDED;
@@ -120,23 +126,41 @@ public class PIDF {
                     theOpMode.telemetry.addData("Beam", "Broken");
 
                 }
+                if (theOpMode.gamepad1.x) {
+                    target = extended;
+                    rCollection.setPosition(transfer);
+                    lCollection.setPosition(transfer);
+                    // extend.setTargetPosition(extended);
+                    extendState = ExtendState.EXTEND;
+                    collection.setPower(.8);
+                }
+                if (theOpMode.gamepad1.y) {
+                    target = mid;
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+                    //extend.setTargetPosition(mid);
+                    extendState = ExtendState.MID;
+                    collection.setPower(.8);
+                }
                 break;
             case RETRACT:
-                if (Math.abs(extend.getCurrentPosition()) - retracted < 10 && !cBeam.getState()) {
+                deliveryS.setPosition(transferPos);
+                claw.setPosition(open);
+                if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !cBeam.getState()) {
                     rotateTimer.reset();
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                     collection.setPower(.6);
-                    if (rotateTimer.seconds() >= transferTimer) {
+                    if (cBeam.getState() && rotateTimer.seconds() >= .5) {
+                        extendState = ExtendState.START;
+                        deliveryState = DeliveryState.COLLECT;
                         claw.setPosition(closed);
                         deliveryS.setPosition(frontSpec);
                     }
-
                 }
+                break;
 
-
-
-                    default:
+            default:
                 extendState = ExtendState.START;
         }
         if (theOpMode.gamepad1.a && extendState !=  ExtendState.START) {
@@ -147,13 +171,18 @@ public class PIDF {
             extendState = ExtendState.START;
         }
         controller.setPID(p, i, d);
-        int curPos = collection.getCurrentPosition();
+        int curPos = extend.getCurrentPosition();
         double pid = controller.calculate(curPos, target);
         double power = pid;
         extend.setPower(power);
         theOpMode.telemetry.addData("pos", curPos);
         theOpMode.telemetry.addData("target", target);
+        theOpMode.telemetry.addData("Current State", extendState);
+        theOpMode.telemetry.addData("timer",rotateTimer);
         theOpMode.telemetry.update();
+
+    }
+    public void testTele() {
 
     }
 }

@@ -11,7 +11,6 @@ public class PDFLTeleop extends OpMode {
     Collection3d collection3d;
     PDFL pdfl;
     PIDF pidf;
-    TurnPIDController pidController;
 
     //PIDFLift pidfLift;
 
@@ -22,7 +21,7 @@ public class PDFLTeleop extends OpMode {
         drivetrain = new Drivetrain(hardwareMap, this, 384.5, 1, 4.09);
       //  delivery = new Delivery(hardwareMap, this);
         pdfl = new PDFL(1.1, 0, 0, 0, hardwareMap,this,145.1, 1,1);
-        pidController = new TurnPIDController(hardwareMap, this,0.1,0,0, 145.1, 1, 1);
+        pidf = new PIDF(hardwareMap, this);
         //collection3d = new Collection3d(hardwareMap, this);
 
 
@@ -32,10 +31,11 @@ public class PDFLTeleop extends OpMode {
     @Override
     public void loop() {
         drivetrain.UpdateDriveTrain();
+        pidf.tele();
 
       // pidController.update();
+        //pdfl.run(1);
 
-       pdfl.run(1);
 
 
 

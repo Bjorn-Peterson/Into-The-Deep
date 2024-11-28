@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
+import org.opencv.core.Mat;
+
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -20,7 +22,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @Config
-@Autonomous(name = "BLUE_TEST_AUTO_PIXEL", group = "Autonomous")
+@Autonomous
 public class LeftAuto extends LinearOpMode {
 
     @Override
@@ -31,29 +33,19 @@ public class LeftAuto extends LinearOpMode {
 
 
         TrajectoryActionBuilder tab1 = drive.actionBuilder(initialPose)
-                .lineToYSplineHeading(33, Math.toRadians(0))
-                .waitSeconds(2)
                 .setTangent(Math.toRadians(90))
-                .lineToY(48)
-                .setTangent(Math.toRadians(0))
-                .lineToX(32)
-                .strafeTo(new Vector2d(44.5, 30))
-                .turn(Math.toRadians(180))
-                .lineToX(47.5)
+                .strafeToSplineHeading(new Vector2d(20, 35),Math.toRadians(-45))
 
                 .waitSeconds(3);
         Action trajectoryActionCloseOut = tab1.fresh()
-                .strafeTo(new Vector2d(48, 12))
                 .build();
 
         // actions that need to happen on init; for instance, a claw tightening.
-
-        Action trajectoryActionChosen;
-        trajectoryActionChosen = tab1.build();
+        waitForStart();
 
         Actions.runBlocking(
-                new ParallelAction(
-                        trajectoryActionChosen,
+                new SequentialAction(
+                        tab1.build(),
 
                         trajectoryActionCloseOut
                 )
