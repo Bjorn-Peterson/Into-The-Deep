@@ -1,17 +1,12 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
 
-import android.graphics.Path;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -62,6 +57,9 @@ public class PIDF {
     ElapsedTime rotateTimer = new ElapsedTime();
     double rotateTime;
     double transferTimer = .8;
+
+
+    boolean intakeToggle = false;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -151,13 +149,14 @@ public class PIDF {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                     collection.setPower(.6);
-                    if (cBeam.getState() && rotateTimer.seconds() >= .5) {
+                }
+                    if (theOpMode.gamepad1.right_bumper) {
                         extendState = ExtendState.START;
                         deliveryState = DeliveryState.COLLECT;
                         claw.setPosition(closed);
                         deliveryS.setPosition(frontSpec);
                     }
-                }
+
                 break;
 
             default:
@@ -181,6 +180,16 @@ public class PIDF {
         theOpMode.telemetry.addData("timer",rotateTimer);
         theOpMode.telemetry.update();
 
+        if (theOpMode.gamepad1.dpad_up) {
+            deliveryS.setPosition(backSpec);
+        }
+        else if (theOpMode.gamepad1.dpad_down) {
+            deliveryS.setPosition(frontSpec);
+        }
+
+
+
     }
+
 
 }
