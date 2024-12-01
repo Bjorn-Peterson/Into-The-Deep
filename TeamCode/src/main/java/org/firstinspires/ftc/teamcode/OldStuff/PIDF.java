@@ -6,10 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
+
 
 public class PIDF {
     public enum ExtendState {
@@ -23,8 +22,7 @@ public class PIDF {
     public enum DeliveryState {
         START,
         COLLECT,
-        SPECIMEN,
-        SAMPLE
+        DELIVER
     }
     ExtendState extendState = ExtendState.START;
 
@@ -34,7 +32,6 @@ public class PIDF {
     public static int target;
 
 
-    private ElapsedTime runtime = new ElapsedTime();
     private OpMode theOpMode;
     DcMotorEx extend;
     DcMotorEx collection;
@@ -42,24 +39,20 @@ public class PIDF {
     public Servo lCollection;
     public Servo claw;
     public Servo deliveryS;
-    double countsPerInch;
-    int extended = 650;
-    int retracted = -10;
+    int extended = 680;
+    int retracted = 0;
     int mid = 400;
-    double collect = .63;
-    double transfer = .54;
+    double collect = .65;
+    double transfer = .51;
+    double xHeight = .46;
     double closed = .85;
-    double open = .75;
-    double frontSpec = .5;
-    double backSpec = .9;
-    double transferPos = .12;
+    double open = .7;
+    double frontSpec = .05;
+    double backSpec = .54;
+    double transferPos = .053;
     DigitalChannel cBeam;
-    ElapsedTime rotateTimer = new ElapsedTime();
-    double rotateTime;
-    double transferTimer = .8;
+    DigitalChannel dBeam;
 
-
-    boolean intakeToggle = false;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -78,20 +71,37 @@ public class PIDF {
 
         cBeam = hardwareMap.get(DigitalChannel.class, "beam");
         cBeam.setMode(DigitalChannel.Mode.INPUT);
+        dBeam = hardwareMap.get(DigitalChannel.class, "dBeam");
+        dBeam.setMode(DigitalChannel.Mode.INPUT);
     }
 
     public void tele() {
+        if (theOpMode.gamepad1.left_bumper) {
+            claw.setPosition(open);
+        }
+        else if (theOpMode.gamepad1.right_bumper) {
+            claw.setPosition(closed);
+        }
+        if (theOpMode.gamepad1.dpad_up) {
+            deliveryState = DeliveryState.DELIVER;
+            deliveryS.setPosition(backSpec);
+        }
+        else if (theOpMode.gamepad1.dpad_down) {
+            deliveryState = DeliveryState.COLLECT;
+            deliveryS.setPosition(frontSpec);
+        }
         switch (extendState) {
+            //Fully Retracted in transfer position
             case START:
+                collection.setPower(0);
                 rCollection.setPosition(transfer);
                 lCollection.setPosition(transfer);
-                deliveryS.setPosition(transferPos);
 
-
+                // Start extending, turn on collection
                 if (theOpMode.gamepad1.x) {
                     target = extended;
-                    rCollection.setPosition(transfer);
-                    lCollection.setPosition(transfer);
+                    rCollection.setPosition(xHeight);
+                    lCollection.setPosition(xHeight);
                     // extend.setTargetPosition(extended);
                     extendState = ExtendState.EXTEND;
                     collection.setPower(.8);
@@ -100,11 +110,20 @@ public class PIDF {
                     target = mid;
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
-                    //extend.setTargetPosition(mid);
                     extendState = ExtendState.MID;
                     collection.setPower(.8);
                 }
+                if (theOpMode.gamepad1.dpad_up) {
+                    deliveryS.setPosition(backSpec);
+                }
+                else if (theOpMode.gamepad1.dpad_down) {
+                    deliveryS.setPosition(frontSpec);
+                }
+                else if (theOpMode.gamepad1.dpad_left) {
+                    deliveryS.setPosition(transferPos);
+                }
                 break;
+                // Rotate to collecting position
             case EXTEND:
                 if (Math.abs(extend.getCurrentPosition() - extended) < 30) {
                     rCollection.setPosition(collect);
@@ -114,21 +133,21 @@ public class PIDF {
                 break;
             case EXTENDED:
             case MID:
+                // If we collect a specimen, retract extension, rotate to transfer position, stop collection
                 if (!cBeam.getState()) {
+                    deliveryS.setPosition(transferPos);
                     target = retracted;
                     collection.setPower(0);
-                    rCollection.setPosition(transfer);
-                    lCollection.setPosition(transfer);
+                    rCollection.setPosition(xHeight);
+                    lCollection.setPosition(xHeight);
                     extendState = ExtendState.RETRACT;
-                    //extend.setTargetPosition(retracted);
                     theOpMode.telemetry.addData("Beam", "Broken");
 
                 }
                 if (theOpMode.gamepad1.x) {
                     target = extended;
-                    rCollection.setPosition(transfer);
-                    lCollection.setPosition(transfer);
-                    // extend.setTargetPosition(extended);
+                    rCollection.setPosition(xHeight);
+                    lCollection.setPosition(xHeight);
                     extendState = ExtendState.EXTEND;
                     collection.setPower(.8);
                 }
@@ -136,26 +155,22 @@ public class PIDF {
                     target = mid;
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
-                    //extend.setTargetPosition(mid);
                     extendState = ExtendState.MID;
                     collection.setPower(.8);
                 }
                 break;
             case RETRACT:
+                deliveryState = DeliveryState.COLLECT;
                 deliveryS.setPosition(transferPos);
-                claw.setPosition(open);
-                if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !cBeam.getState()) {
-                    rotateTimer.reset();
+                if (Math.abs(extend.getCurrentPosition() - retracted) < 30) {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
-                    collection.setPower(.6);
+                    collection.setPower(.7);
                 }
-                    if (theOpMode.gamepad1.right_bumper) {
-                        extendState = ExtendState.START;
-                        deliveryState = DeliveryState.COLLECT;
-                        claw.setPosition(closed);
-                        deliveryS.setPosition(frontSpec);
-                    }
+                if (!dBeam.getState()) {
+                    claw.setPosition(closed);
+                }
+
 
                 break;
 
@@ -171,23 +186,33 @@ public class PIDF {
         }
         controller.setPID(p, i, d);
         int curPos = extend.getCurrentPosition();
-        double pid = controller.calculate(curPos, target);
-        double power = pid;
+        double power = controller.calculate(curPos, target);
         extend.setPower(power);
         theOpMode.telemetry.addData("pos", curPos);
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.addData("Current State", extendState);
-        theOpMode.telemetry.addData("timer",rotateTimer);
         theOpMode.telemetry.update();
 
-        if (theOpMode.gamepad1.dpad_up) {
-            deliveryS.setPosition(backSpec);
-        }
-        else if (theOpMode.gamepad1.dpad_down) {
-            deliveryS.setPosition(frontSpec);
-        }
 
 
+        switch (deliveryState) {
+/*
+            case COLLECT:
+                if (!dBeam.getState()) {
+                    deliveryState = DeliveryState.DELIVER;
+                    claw.setPosition(closed);
+                }
+            case DELIVER:
+                deliveryS.setPosition(backSpec);
+
+            default: deliveryState = DeliveryState.START;
+            if (theOpMode.gamepad1.dpad_down && deliveryState != DeliveryState.COLLECT) {
+                deliveryState = DeliveryState.COLLECT;
+            }
+
+
+ */
+        }
 
     }
 
