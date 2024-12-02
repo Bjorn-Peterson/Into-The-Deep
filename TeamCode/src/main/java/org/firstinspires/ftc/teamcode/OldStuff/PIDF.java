@@ -57,7 +57,6 @@ public class PIDF {
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
 
-
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
         controller = new PIDController(p, i, d);
