@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
+
 
 public class PIDF {
     public enum ExtendState {
@@ -22,7 +24,8 @@ public class PIDF {
     public enum DeliveryState {
         START,
         COLLECT,
-        DELIVER
+        DELIVER,
+        SPECIMEN
     }
     ExtendState extendState = ExtendState.START;
 
@@ -52,6 +55,7 @@ public class PIDF {
     double transferPos = .053;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
+    DigitalChannel lSwitch;
 
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
@@ -73,6 +77,8 @@ public class PIDF {
         cBeam.setMode(DigitalChannel.Mode.INPUT);
         dBeam = hardwareMap.get(DigitalChannel.class, "dBeam");
         dBeam.setMode(DigitalChannel.Mode.INPUT);
+        lSwitch = hardwareMap.get(DigitalChannel.class, "lSwitch");
+        lSwitch.setMode(DigitalChannel.Mode.INPUT);
     }
 
     public void tele() {
@@ -125,7 +131,7 @@ public class PIDF {
                 break;
                 // Rotate to collecting position
             case EXTEND:
-                if (Math.abs(extend.getCurrentPosition() - extended) < 30) {
+                if (Math.abs(extend.getCurrentPosition() - extended) < 30 && theOpMode.gamepad1.x) {
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
                     extendState = ExtendState.EXTENDED;
@@ -168,7 +174,8 @@ public class PIDF {
                     collection.setPower(.7);
                 }
                 if (!dBeam.getState()) {
-                    claw.setPosition(closed);
+                    extendState = ExtendState.START;
+                    deliveryState = DeliveryState.COLLECT;
                 }
 
 
@@ -196,22 +203,23 @@ public class PIDF {
 
 
         switch (deliveryState) {
-/*
+
             case COLLECT:
-                if (!dBeam.getState()) {
-                    deliveryState = DeliveryState.DELIVER;
                     claw.setPosition(closed);
-                }
-            case DELIVER:
-                deliveryS.setPosition(backSpec);
+                    deliveryS.setPosition(backSpec);
+                    if (theOpMode.gamepad1.left_bumper) {
+                        claw.setPosition(open);
+                    }
+
+
+
 
             default: deliveryState = DeliveryState.START;
-            if (theOpMode.gamepad1.dpad_down && deliveryState != DeliveryState.COLLECT) {
-                deliveryState = DeliveryState.COLLECT;
+            if (theOpMode.gamepad1.dpad_down && deliveryState != DeliveryState.START) {
+                deliveryState = DeliveryState.START;
             }
 
 
- */
         }
 
     }
