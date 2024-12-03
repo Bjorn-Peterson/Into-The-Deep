@@ -45,14 +45,14 @@ public class PIDF {
     int extended = 680;
     int retracted = 0;
     int mid = 400;
-    double collect = .65;
-    double transfer = .51;
+    double collect = .645;
+    double transfer = .57;
     double xHeight = .46;
     double closed = .85;
     double open = .7;
     double frontSpec = .05;
     double backSpec = .54;
-    double transferPos = .053;
+    double transferPos = .122;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
@@ -118,15 +118,7 @@ public class PIDF {
                     extendState = ExtendState.MID;
                     collection.setPower(.8);
                 }
-                if (theOpMode.gamepad1.dpad_up) {
-                    deliveryS.setPosition(backSpec);
-                }
-                else if (theOpMode.gamepad1.dpad_down) {
-                    deliveryS.setPosition(frontSpec);
-                }
-                else if (theOpMode.gamepad1.dpad_left) {
-                    deliveryS.setPosition(transferPos);
-                }
+
                 break;
                 // Rotate to collecting position
             case EXTEND:
@@ -165,17 +157,19 @@ public class PIDF {
                 }
                 break;
             case RETRACT:
-                deliveryState = DeliveryState.COLLECT;
                 deliveryS.setPosition(transferPos);
-                if (Math.abs(extend.getCurrentPosition() - retracted) < 30) {
+                claw.setPosition(open);
+                if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
-                    collection.setPower(.7);
+                    collection.setPower(.5);
+
                 }
                 if (!dBeam.getState()) {
                     extendState = ExtendState.START;
                     deliveryState = DeliveryState.COLLECT;
                 }
+
 
 
                 break;
@@ -209,12 +203,24 @@ public class PIDF {
                     if (theOpMode.gamepad1.left_bumper) {
                         claw.setPosition(open);
                     }
+                if (theOpMode.gamepad1.dpad_up) {
+                    deliveryState = DeliveryState.DELIVER;
+                    deliveryS.setPosition(backSpec);
+                }
+                else if (theOpMode.gamepad1.dpad_down) {
+                    deliveryState = DeliveryState.COLLECT;
+                    deliveryS.setPosition(frontSpec);
+                }
+            case DELIVER:
+            case SPECIMEN:
+
 
 
 
 
             default: deliveryState = DeliveryState.START;
             if (theOpMode.gamepad1.dpad_down && deliveryState != DeliveryState.START) {
+                deliveryS.setPosition(transferPos);
                 deliveryState = DeliveryState.START;
             }
 
