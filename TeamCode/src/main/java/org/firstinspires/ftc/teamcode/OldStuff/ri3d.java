@@ -977,8 +977,6 @@ public class ri3d {
 
 
 
-
-
     public void DriverControls() {
         if (theOpMode.gamepad1.y){
             upFlag = true;

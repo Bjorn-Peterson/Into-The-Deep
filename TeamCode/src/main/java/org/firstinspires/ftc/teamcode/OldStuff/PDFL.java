@@ -17,7 +17,6 @@ import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 @Autonomous
 public class PDFL extends LinearOpMode {
 
-
     private PIDController controller;
     public static double p = 0.01, i = 0, d = 0.0001;
     public static double f = 0;

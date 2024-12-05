@@ -32,7 +32,6 @@ public class TestAuto extends LinearOpMode {
         pidf.auto(300);
 
 
-
     }
 
 }

@@ -229,7 +229,6 @@ public class PIDF {
 
 
         }
-
     }
     public void auto(int target) {
         while (((LinearOpMode) theOpMode).opModeIsActive()) {

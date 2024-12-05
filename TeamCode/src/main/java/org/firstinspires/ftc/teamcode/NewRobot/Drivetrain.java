@@ -98,7 +98,6 @@ public class Drivetrain {
         rightDrive.setPower(frontRightPower*drvTrnSpd);
         rightBackDrive.setPower(backRightPower*drvTrnSpd);
 
-
     }
 
 }
