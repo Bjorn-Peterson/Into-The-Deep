@@ -842,7 +842,7 @@ public class ri3d {
     public void turnPID(double degrees, double timeoutS) {
         //turnToPID(degrees + getAbsoluteAngle(), timeoutS);
     }
-/*
+
     void turnToPID(double targetAngle, double timeoutS) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1003,10 +1003,7 @@ public class ri3d {
 
 
     }
-    public void gyroLift(double speed, double pos, double timeoutS) {
 
-
-    }
     public void UpdateDriveTrain() {
         drvTrnSpd = 1;
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1060,20 +1057,5 @@ public class ri3d {
             rightBackDrive.setPower(.5);
         }
     }
-
-      /*public void ResetHeading() {
-          if (theOpMode.gamepad1.b) {
-              angles = imu.getAngularOrientation
-                      (AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-              IMUReading = (-imu.getAngularOrientation().firstAngle);
-              startingHeadingInRadians = (Math.toRadians(IMUReading) + 3.14159);
-              theOpMode.telemetry.addData("Starting heading", startingHeadingInRadians);
-              theOpMode.telemetry.addData("IMUReading", IMUReading);
-              theOpMode.telemetry.update();
-
-
-          }
-      }*/
-    // https://www.youtube.com/watch?v=xm3YgoEiEDc
 
 }

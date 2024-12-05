@@ -1,18 +1,13 @@
+
 package org.firstinspires.ftc.teamcode.OldStuff;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 // Single use per object
 public class TurnPIDController {
     private double kP, kI, kD;
     private ElapsedTime timer = new ElapsedTime();
-    private double targetPos;
+    private double targetAngle;
     private double lastError = 0;
     private double accumulatedError = 0;
     private double lastTime = -1;
@@ -21,51 +16,37 @@ public class TurnPIDController {
     private double derivative = 0;
     private double dT = 0;
     private double masxPower = 0;
-    int extended;
-    int retracted;
-    int mid;
-    double collect;
-    double transfer;
-    DigitalChannel cBeam;
-
-
-
-
-    private OpMode theOpMode;
-
-    public TurnPIDController(HardwareMap hardwareMap, OpMode opMode, double target, double p, double i, double d, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
+    public TurnPIDController(double target, double p, double i, double d) {
         kP = p;
         kI = i;
         kD = d;
-        targetPos = target;
-
-
-
-        theOpMode = opMode;
-
-
+        targetAngle = target;
     }
 
-    public double update(double currentPos) {
-
+    public double update(double currentAngle) {
 
         // P
-        double error = targetPos - currentPos;
+        double error = targetAngle - currentAngle;
         error %= 360;
         error += 360;
         error %= 360;
         if (error > 180) {
             error -= 360;
         }
-
-
         dT = (timer.milliseconds() - lastTime);
         integral = integral + error * dT;
         derivative = ((error - lastError) / dT);
         double motorPower = (kP * error + kI *integral + kD * derivative);
-        motorPower = Math.max(-1, Math.min(motorPower, 1));
+        motorPower = Math.max(-.35, Math.min(motorPower, .35));
         // I
+   /*     accumulatedError *= Math.signum(error);
+        accumulatedError += error;
+        if (Math.abs(error) < 2) {
+            accumulatedError = 0;
+        }
 
+
+    */
         // D
         double slope = 0;
         if (lastTime > 0) {
@@ -76,8 +57,13 @@ public class TurnPIDController {
         lastError = error;
         lastTime = timer.milliseconds();
 
+        //     double motorPower = 0.1 * Math.signum(error)
+        //     + 0.9 * Math.tanh(kP * error + kI * accumulatedError - kD * slope);
         return motorPower;
+    }
 
+    public double getLastSlope() {
+        return lastSlope;
     }
 
 }
