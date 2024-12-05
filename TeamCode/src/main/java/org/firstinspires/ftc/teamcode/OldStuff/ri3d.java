@@ -134,7 +134,7 @@ public class ri3d {
         leftBackDrive.setPower(Math.abs(error));
         rightBackDrive.setPower(Math.abs(error));
 
-        while (((LinearOpMode)theOpMode).opModeIsActive() &&
+        while (((LinearOpMode) theOpMode).opModeIsActive() &&
                 (runtime.seconds() < timeoutS) &&
                 (leftDrive.isBusy() && rightDrive.isBusy() && leftBackDrive.isBusy() && rightBackDrive.isBusy())) {
             leftDrive.setPower(Math.abs(error));
@@ -198,7 +198,7 @@ public class ri3d {
         leftBackDrive.setPower(Math.abs(speed));
         rightBackDrive.setPower(Math.abs(speed));
 
-        while (((LinearOpMode)theOpMode).opModeIsActive() &&
+        while (((LinearOpMode) theOpMode).opModeIsActive() &&
                 (runtime.seconds() < timeoutS) &&
                 (leftDrive.isBusy() && rightDrive.isBusy() && leftBackDrive.isBusy() && rightBackDrive.isBusy())) {
 
@@ -226,6 +226,7 @@ public class ri3d {
         rightBackDrive.setPower(0);
 
     }
+
     public void encoderDriveStart(double speed, double inches, double timeoutS) {
         int newLeftTarget;
         int newRightTarget;
@@ -269,8 +270,7 @@ public class ri3d {
                     leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
             theOpMode.telemetry.update();
             return true;
-        }
-        else {
+        } else {
             encoderDriveEnd();
             return false;
         }
@@ -445,6 +445,7 @@ public class ri3d {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
+
     public void driveToRangeSensor(double APPROACH_SPEED, double inches, double timeoutS) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -470,6 +471,7 @@ public class ri3d {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
+
     public void driveToDistanceSensorBackwards(double APPROACH_SPEED, double inches, double timeoutS) {
         double sensorReading = distanceSensor1.getDistance(DistanceUnit.INCH);
         runtime.reset();
@@ -496,6 +498,7 @@ public class ri3d {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
+
     public void strafeToDistanceSensorBackwards(double APPROACH_SPEED, double inches, double timeoutS) {
         double sensorReading = 0.2;
         runtime.reset();
@@ -516,6 +519,7 @@ public class ri3d {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
+
     public void driveToDistanceSensorStart(double APPROACH_SPEED, double inches, double timeoutS) {
         double sensorReading = 5001;
         runtime.reset();
@@ -525,6 +529,7 @@ public class ri3d {
         rightBackDrive.setPower(APPROACH_SPEED);
 
     }
+
     public void driveToPlace(double speed) {
 
     }
@@ -551,6 +556,7 @@ public class ri3d {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
+
     public void strafeToDistanceSensor(double APPROACH_SPEED, double inches, double timeoutS) {
         double sensorReading = Double.MAX_VALUE;
         runtime.reset();
@@ -599,13 +605,11 @@ public class ri3d {
 //            theOpMode.telemetry.addData("Currently at", " at %.2f", sensorReading);
 //            theOpMode.telemetry.update();
             return true;
-        }
-        else {
+        } else {
             strafeToDistanceSensorEnd();
             return false;
         }
     }
-
 
 
     public void strafeToDistanceSensorEnd() {
@@ -614,6 +618,7 @@ public class ri3d {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
+
     public void diagonalDriveRight(double speed, double inches, double timeoutS) {
         int newLeftTarget;
         int newRightTarget;
@@ -700,6 +705,7 @@ public class ri3d {
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
+
     public void pidDrive(double speed, double inches, double timeoutS) {
         int newLeftTarget;
         int newRightTarget;
@@ -711,7 +717,6 @@ public class ri3d {
 
         }
     }
-
 
 
     public void driveToColorSensor(double APPROACH_SPEED, boolean isRed, double timeoutS) {
@@ -763,7 +768,7 @@ public class ri3d {
         return colors.alpha;
 
     }
-    /*
+
     public void resetAngle() {
         lastAngles = imuCH.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         currAngle = 0;
@@ -817,6 +822,7 @@ public class ri3d {
         }
         turn(error);
     }
+
     public void turnToTable(double degrees) {
         Orientation orientation = imuCH.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         double error = degrees - orientation.firstAngle;
@@ -827,15 +833,16 @@ public class ri3d {
         }
         turn(error);
     }
+
     public double getAbsoluteAngle() {
         return imuCH.getAngularOrientation(
                 AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
     }
 
     public void turnPID(double degrees, double timeoutS) {
-        turnToPID(degrees + getAbsoluteAngle(), timeoutS);
+        //turnToPID(degrees + getAbsoluteAngle(), timeoutS);
     }
-
+/*
     void turnToPID(double targetAngle, double timeoutS) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1000,8 +1007,6 @@ public class ri3d {
 
 
     }
-
-     */
     public void UpdateDriveTrain() {
         drvTrnSpd = 1;
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

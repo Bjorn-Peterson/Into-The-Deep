@@ -27,7 +27,7 @@ public class Teleop extends OpMode {
     }
     @Override
     public void loop() {
-        ri3d.UpdateDriveTrain();
+       // ri3d.UpdateDriveTrain();
         collection3d.teleopControls();
         oldLift.teleLift();
        // pidf.tele();

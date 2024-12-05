@@ -1,5 +1,5 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
-
+//Sensor
 
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -42,10 +42,10 @@ public class PIDF {
     public Servo lCollection;
     public Servo claw;
     public Servo deliveryS;
-    int extended = 680;
+    int extended = 630;
     int retracted = 0;
     int mid = 400;
-    double collect = .645;
+    double collect = .651;
     double transfer = .57;
     double xHeight = .46;
     double closed = .85;
@@ -53,6 +53,7 @@ public class PIDF {
     double frontSpec = .05;
     double backSpec = .54;
     double transferPos = .122;
+    double midPos = .3;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
@@ -109,7 +110,6 @@ public class PIDF {
                     lCollection.setPosition(xHeight);
                     // extend.setTargetPosition(extended);
                     extendState = ExtendState.EXTEND;
-                    collection.setPower(.8);
                 }
                 if (theOpMode.gamepad1.y) {
                     target = mid;
@@ -122,7 +122,9 @@ public class PIDF {
                 break;
                 // Rotate to collecting position
             case EXTEND:
-                if (Math.abs(extend.getCurrentPosition() - extended) < 30 && theOpMode.gamepad1.x) {
+                deliveryS.setPosition(midPos);
+                if (Math.abs(extend.getCurrentPosition() - extended) < 100 && theOpMode.gamepad1.x) {
+                    collection.setPower(.8);
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
                     extendState = ExtendState.EXTENDED;
@@ -143,8 +145,8 @@ public class PIDF {
                 }
                 if (theOpMode.gamepad1.x) {
                     target = extended;
-                    rCollection.setPosition(xHeight);
-                    lCollection.setPosition(xHeight);
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
                     extendState = ExtendState.EXTEND;
                     collection.setPower(.8);
                 }

@@ -28,7 +28,7 @@ public class SoloTeleop extends OpMode {
     }
     @Override
     public void loop() {
-        ri3d.UpdateDriveTrain();
+       // ri3d.UpdateDriveTrain();
         collection3d.teleopControls();
         //lift.teleLift();
         collection3d = new Collection3d(hardwareMap, this);
