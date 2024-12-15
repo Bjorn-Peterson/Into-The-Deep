@@ -11,19 +11,27 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-
-import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous
 public class PDFL extends LinearOpMode {
+    public enum LiftState {
+        START,
+        EXTEND,
+        EXTENDED,
+        RETRACT
+    }
+    LiftState liftState = LiftState.START;
+    ri3d ri3d;
 
     private PIDController controller;
     public static double p = 0.01, i = 0, d = 0.0001;
     public static double f = 0;
     public static int target;
-    private final double ticksPerInch = 0;
+    private final double ticksPerInch = (145.1) / (1.15 * 3.14);
 
-    public DcMotorEx lift;
+    public DcMotorEx leftMotor;
+    public DcMotorEx rightMotor;
 
     public Servo claw;
     public Servo deliveryS;
@@ -37,44 +45,86 @@ public class PDFL extends LinearOpMode {
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
+    Servo rDelivery;
+    ElapsedTime liftTimer = new ElapsedTime();
+    int retracted = 20;
+    boolean liftDone;
+    boolean liftStart = false;
 
 
 
     @Override
         public void runOpMode() {
-        PIDF pidf = new PIDF(hardwareMap, this);
+
         controller = new PIDController(p, i, d);
+        ri3d = new ri3d(hardwareMap, this, 384.5, 1, 4);
 
-        claw = hardwareMap.get(Servo.class, "claw");
-        deliveryS = hardwareMap.get(Servo.class, "delivery");
-        lift = hardwareMap.get(DcMotorEx.class, "lift");
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftMotor = hardwareMap.get(DcMotorEx.class, "leftMotor");
+        rightMotor = hardwareMap.get(DcMotorEx.class, "rightMotor");
+        leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        cBeam = hardwareMap.get(DigitalChannel.class, "beam");
-        cBeam.setMode(DigitalChannel.Mode.INPUT);
-        dBeam = hardwareMap.get(DigitalChannel.class, "dBeam");
-        dBeam.setMode(DigitalChannel.Mode.INPUT);
-        lSwitch = hardwareMap.get(DigitalChannel.class, "lSwitch");
-        lSwitch.setMode(DigitalChannel.Mode.INPUT);
+
 
 
             waitForStart();
 
-            pidf.auto(300);
-            target = 200;
+    liftStart = true;
+    target = 400;
+    //ri3d.encoderDrive(.3, 3, 3);
 
 
-            controller.setPID(p, i, d);
-            int curPos = lift.getCurrentPosition();
-            double pid = controller.calculate(curPos, target);
-            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
-            double power = pid + ff;
-            lift.setPower(power);
-            telemetry.addData("pos", curPos);
-            telemetry.addData("target", target);
-            telemetry.update();
+
+
+
+
+        switch (liftState) {
+            case START:
+                if (liftStart) {
+                    liftState = LiftState.EXTEND;
+                }
+                break;
+            case EXTEND:
+                if (Math.abs(leftMotor.getCurrentPosition() - target) < 100) {
+                    rDelivery.setPosition(.8);
+                    liftTimer.reset();
+                    liftState = LiftState.EXTENDED;
+                }
+                break;
+            case EXTENDED:
+                if (liftTimer.seconds() >= 2) {
+                    liftState = LiftState.RETRACT;
+                    rDelivery.setPosition(.4);
+                }
+                break;
+            case RETRACT:
+                target = retracted;
+                if (Math.abs(leftMotor.getCurrentPosition() - target) < 10) {
+                    liftDone = true;
+                    liftState = LiftState.START;
+                    liftStart = false;
+                }
+                break;
+            default:
+                liftState = LiftState.START;
         }
 
 
+        controller.setPID(p, i, d);
+        int curPos = leftMotor.getCurrentPosition();
+        double pid = controller.calculate(curPos, target);
+        double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+        double power = pid + ff;
+        leftMotor.setPower(power);
+        rightMotor.setPower(power);
+        telemetry.addData("pos", curPos);
+        telemetry.addData("target", target);
+        telemetry.addData("power", power);
+        telemetry.addData("Lift State", liftState);
+        telemetry.update();
     }
+}
+
+
 
