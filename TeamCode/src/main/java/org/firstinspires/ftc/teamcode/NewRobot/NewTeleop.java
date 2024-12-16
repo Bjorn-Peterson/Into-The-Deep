@@ -31,7 +31,7 @@ public class NewTeleop extends OpMode {
     public void loop() {
         drivetrain.UpdateDriveTrain();
         lift.soloControls();
-         pidf.tele();
+         pidf.tele(true);
         //pidf.test();
 
 

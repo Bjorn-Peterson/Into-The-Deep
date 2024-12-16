@@ -4,11 +4,13 @@ package org.firstinspires.ftc.teamcode.OldStuff;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
 import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 
@@ -59,6 +61,8 @@ public class PIDF {
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
+    NormalizedColorSensor colorSensor;
+    double sensorReading;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -74,6 +78,8 @@ public class PIDF {
         deliveryS = hardwareMap.get(Servo.class, "delivery");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
         //collection.setDirection(DcMotorSimple.Direction.REVERSE);
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
+        colorSensor.getNormalizedColors();
 
         cBeam = hardwareMap.get(DigitalChannel.class, "beam");
         cBeam.setMode(DigitalChannel.Mode.INPUT);
@@ -83,7 +89,12 @@ public class PIDF {
         lSwitch.setMode(DigitalChannel.Mode.INPUT);
     }
 
-    public void tele() {
+    public void tele(boolean isRed) {
+        if (isRed) {
+            sensorReading = colorSensor.getNormalizedColors().red;
+        } else {
+            sensorReading = colorSensor.getNormalizedColors().blue;
+        }
         if (theOpMode.gamepad1.left_bumper) {
             claw.setPosition(open);
         }
@@ -139,8 +150,9 @@ public class PIDF {
                 break;
             case EXTENDED:
             case MID:
+
                 // If we collect a specimen, retract extension, rotate to transfer position, stop collection
-                if (!cBeam.getState()) {
+                if (!cBeam.getState() && sensorReading != colorSensor.getNormalizedColors().blue) {
                     deliveryS.setPosition(transferPos);
                     target = retracted;
                     collection.setPower(0);
@@ -161,7 +173,7 @@ public class PIDF {
             case RETRACT:
                 deliveryS.setPosition(transferPos);
                 claw.setPosition(open);
-                if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
+                if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                     collection.setPower(.5);
@@ -204,9 +216,7 @@ public class PIDF {
             case COLLECT:
                     claw.setPosition(closed);
                     deliveryS.setPosition(backSpec);
-                    if (theOpMode.gamepad1.left_bumper) {
-                        claw.setPosition(open);
-                    }
+
                 if (theOpMode.gamepad1.dpad_up) {
                     deliveryState = DeliveryState.DELIVER;
                     deliveryS.setPosition(backSpec);
