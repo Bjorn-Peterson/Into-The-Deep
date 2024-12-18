@@ -3,6 +3,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -13,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.NewRobot.AutoActions.CollectionActions;
+import org.opencv.core.Mat;
 
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 
@@ -33,7 +35,7 @@ public class BlueSideTestAuto extends LinearOpMode {
 
         TrajectoryActionBuilder path1 = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(0))
-                        .lineToY(20)
+                        .lineToX(20)
                                 .waitSeconds(2);
         Action closeOut = path1.endTrajectory().fresh()
                 .build();
@@ -45,9 +47,11 @@ public class BlueSideTestAuto extends LinearOpMode {
 
 
             waitForStart();
+        Action drivePlz = drive.actionBuilder(initialPose).setTangent(Math.toRadians(0)).lineToX(20).build();
         Actions.runBlocking(
-                new SequentialAction(
+                new ParallelAction(
+                        drivePlz,
 
-                        collectionActions.collect()));
+                        collectionActions.collectRun()));
     }
 }

@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -93,6 +94,7 @@ public class CollectionActions {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    telemetryPacket.addLine("does this work?");
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
 
@@ -149,5 +151,70 @@ public class CollectionActions {
             return false;
 
         };
+    }
+    public class CollectRun implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (extendState) {
+                //Fully Retracted in transfer position
+                case START:
+                    collection.setPower(0);
+                    extendState = ExtendState.EXTEND;
+
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+
+                    break;
+                // Rotate to collecting position
+                case EXTEND:
+                    target = 450;
+                    deliveryS.setPosition(midPos);
+                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
+                        collection.setPower(.8);
+                        extendState = ExtendState.EXTENDED;
+                    }
+                    break;
+                case EXTENDED:
+                    // If we collect a specimen, retract extension, rotate to transfer position, stop collection
+                    if (!cBeam.getState()) {
+                        target = retracted;
+                        deliveryS.setPosition(transferPos);
+                        //target = retracted;
+                        collection.setPower(0);
+                        extendState = ExtendState.RETRACT;
+
+
+                    }
+                    break;
+                case RETRACT:
+                    deliveryS.setPosition(transferPos);
+                    claw.setPosition(open);
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
+                        rCollection.setPosition(transfer);
+                        lCollection.setPosition(transfer);
+                        collection.setPower(.5);
+
+                    }
+                    if (!dBeam.getState()) {
+                        extendState = ExtendState.START;
+                        deliveryState = DeliveryState.COLLECT;
+                        return false;
+                    }
+
+
+                    break;
+
+                default:
+                    extendState = ExtendState.START;
+            }
+            controller.setPID(p, i, d);
+            int curPos = extend.getCurrentPosition();
+            double power = controller.calculate(curPos, target);
+            extend.setPower(power);
+            return true;
+        }
+    }
+    public Action collectRun() {
+        return new CollectRun();
     }
 }

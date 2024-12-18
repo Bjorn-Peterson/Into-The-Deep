@@ -16,7 +16,7 @@ public class LeftSide extends LinearOpMode {
 
         waitForStart();
 
-        ri3d.encoderDrive(.75, -8, 2);
+        ri3d.encoderDrive(.75, -8, 42);
         ri3d.strafeEncoderDrive(.4, -32, 3);
         collection.collection.setPower(-.6);
         sleep(300);

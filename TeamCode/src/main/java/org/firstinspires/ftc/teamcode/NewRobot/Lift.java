@@ -14,6 +14,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import java.util.ArrayList;
 
 public class Lift {
+    public enum LiftState {
+        START,
+        MANUAL,
+        AUTO
+    }
     private DcMotor lift;
     private DistanceSensor sensorRange;
     private ElapsedTime runtime = new ElapsedTime();

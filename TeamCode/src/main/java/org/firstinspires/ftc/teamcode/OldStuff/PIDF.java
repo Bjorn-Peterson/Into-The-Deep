@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 
@@ -22,7 +23,8 @@ public class PIDF {
         MID,
         EXTEND,
         EXTENDED,
-        EJECT
+        EJECT,
+        TRANSFER
 
     }
     public enum DeliveryState {
@@ -46,12 +48,14 @@ public class PIDF {
     public Servo lCollection;
     public Servo claw;
     public Servo deliveryS;
-    int extended = 645;
-    int retracted = 0;
+
+    int extended = 655;
+    int retracted = 10;
     int mid = 400;
-    double collect = .651;
-    double transfer = .57;
-    double xHeight = .46;
+    int shortPos = 80;
+    double collect = .7;
+    double transfer = .55;
+    double xHeight = .5;
     double closed = .87;
     double open = .754;
     double frontSpec = .128;
@@ -63,6 +67,7 @@ public class PIDF {
     DigitalChannel lSwitch;
     NormalizedColorSensor colorSensor;
     double sensorReading;
+    ElapsedTime transferTimer = new ElapsedTime();
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -152,7 +157,8 @@ public class PIDF {
             case MID:
 
                 // If we collect a specimen, retract extension, rotate to transfer position, stop collection
-                if (!cBeam.getState() && sensorReading != colorSensor.getNormalizedColors().blue) {
+                //&& sensorReading != colorSensor.getNormalizedColors().blue
+                if (!cBeam.getState()) {
                     deliveryS.setPosition(transferPos);
                     target = retracted;
                     collection.setPower(0);
@@ -173,19 +179,30 @@ public class PIDF {
             case RETRACT:
                 deliveryS.setPosition(transferPos);
                 claw.setPosition(open);
-                if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
+                if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
-                    collection.setPower(.5);
-
+                    if (Math.abs(extend.getCurrentPosition()-retracted) < 20 && !lSwitch.getState()) {
+                        collection.setPower(.7);
+                    }
                 }
                 if (!dBeam.getState()) {
-                    theOpMode.telemetry.addData("DBeam", "Broken");
-                    extendState = ExtendState.START;
-                    deliveryState = DeliveryState.COLLECT;
+                    transferTimer.reset();
                     claw.setPosition(closed);
+                    extendState = ExtendState.TRANSFER;
+                    theOpMode.telemetry.addData("DBeam", "Broken");
                 }
 
+                break;
+            case TRANSFER:
+                theOpMode.telemetry.addData("transferTimer", transferTimer);
+                theOpMode.telemetry.update();
+                target = shortPos;
+                if (transferTimer.seconds() >= .2) {
+                    target = retracted;
+                    extendState = ExtendState.START;
+                    deliveryState = DeliveryState.COLLECT;
+                }
                 break;
             case EJECT:
                 collection.setPower(-.6);
