@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.NewRobot.AutoActions.CollectionActions;
+import org.firstinspires.ftc.teamcode.NewRobot.Lift;
 import org.opencv.core.Mat;
 
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -32,14 +33,19 @@ public class BlueSideTestAuto extends LinearOpMode {
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
 
         CollectionActions collectionActions = new CollectionActions(hardwareMap);
+        Lift lift = new Lift(hardwareMap, this, 145.1, 1, 1.15);
 
         TrajectoryActionBuilder path1 = drive.actionBuilder(initialPose)
                 .setTangent(Math.toRadians(0))
                         .lineToX(20)
                                 .waitSeconds(2);
-        Action closeOut = path1.endTrajectory().fresh()
-                .build();
-
+        Action toDeliver = drive.actionBuilder(initialPose).
+                setTangent(Math.toRadians(0)).
+                splineToLinearHeading(new Pose2d(20,20,35), Math.PI / 2).
+                build();
+        Action collect1 = drive.actionBuilder(initialPose).
+                setTangent(Math.toRadians(35)).
+                lineToX(30).build();
 
         // actions that need to happen on init; for instance, a claw tightening.
 
@@ -47,11 +53,14 @@ public class BlueSideTestAuto extends LinearOpMode {
 
 
             waitForStart();
-        Action drivePlz = drive.actionBuilder(initialPose).setTangent(Math.toRadians(0)).lineToX(20).build();
+
         Actions.runBlocking(
                 new ParallelAction(
-                        drivePlz,
+                        toDeliver,
+                        lift.liftAction()));
 
-                        collectionActions.collectRun()));
+        Actions.runBlocking(
+            new ParallelAction(collect1,
+                    collectionActions.collect()));
     }
 }
