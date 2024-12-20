@@ -27,8 +27,10 @@ public class Lift {
     }
     LiftState liftState = LiftState.START;
     private PIDController controller;
-    public static double p = 0.011, i = 0.000001, d = 0.00008;
+    public static double p = 0.015, i = 0, d = 0.0015;
+    public static double f = 0.1;
     public static int target;
+    private final double ticksPerInch = (145.1) / (1.15 * 3.14);
     double closed = .87;
     double open = .754;
     double frontSpec = .128;
@@ -96,7 +98,7 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 500;
+                    target = 1000;
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
                         claw.setPosition(open);
                         liftTimer.reset();
@@ -105,9 +107,10 @@ public class Lift {
                     break;
                 case LIFTED:
                     if (liftTimer.seconds() >= .5) {
-                        target = 10;
+                        target = 40;
                         deliveryS.setPosition(midPos);
                         liftState = LiftState.DOWN;
+
                     }
                     break;
                 case DOWN:
@@ -115,14 +118,21 @@ public class Lift {
                         liftState = LiftState.START;
                         return false;
                     }
+                    break;
                 default:
                     liftState = LiftState.START;
 
             }
             controller.setPID(p, i, d);
             int curPos = lift.getCurrentPosition();
-            double power = controller.calculate(curPos, target);
+            double pid = controller.calculate(curPos, target);
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double power = pid + ff;
             lift.setPower(power);
+            theOpMode.telemetry.addData("LiftState", liftState);
+            theOpMode.telemetry.addData("target", target);
+            theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
+            theOpMode.telemetry.update();
             return true;
         }
     }

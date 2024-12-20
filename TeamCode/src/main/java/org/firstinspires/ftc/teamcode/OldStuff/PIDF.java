@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
 //Sensor
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -13,6 +17,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.NewRobot.AutoActions.CollectionActions;
 import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 
 
@@ -52,15 +57,15 @@ public class PIDF {
     int extended = 655;
     int retracted = 10;
     int mid = 400;
-    int shortPos = 80;
-    double collect = .7;
+    int shortPos = 100;
+    double collect = .68;
     double transfer = .55;
     double xHeight = .5;
     double closed = .87;
     double open = .754;
     double frontSpec = .128;
-    double backSpec = .56;
-    double transferPos = .125;
+    double backSpec = .59;
+    double transferPos = .18;
     double midPos = .2;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
@@ -112,7 +117,7 @@ public class PIDF {
         }
         else if (theOpMode.gamepad1.dpad_down) {
            // deliveryState = DeliveryState.COLLECT;
-            deliveryS.setPosition(frontSpec);
+            deliveryS.setPosition(transferPos);
         }
         else if (theOpMode.gamepad1.dpad_left) {
             deliveryS.setPosition(midPos);
@@ -137,7 +142,7 @@ public class PIDF {
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
                     extendState = ExtendState.MID;
-                    collection.setPower(.8);
+                    collection.setPower(.95);
                 }
                 if (theOpMode.gamepad1.b) {
                     extendState = ExtendState.EJECT;
@@ -148,7 +153,7 @@ public class PIDF {
             case EXTEND:
                 if (Math.abs(extend.getCurrentPosition() - extended) < 100 && theOpMode.gamepad1.x) {
                     extendState = ExtendState.EXTENDED;
-                    collection.setPower(.8);
+                    collection.setPower(.95);
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
                 }
@@ -173,7 +178,7 @@ public class PIDF {
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
                     extendState = ExtendState.MID;
-                    collection.setPower(.8);
+                    collection.setPower(.9);
                 }
                 break;
             case RETRACT:
@@ -198,7 +203,9 @@ public class PIDF {
                 theOpMode.telemetry.addData("transferTimer", transferTimer);
                 theOpMode.telemetry.update();
                 target = shortPos;
-                if (transferTimer.seconds() >= .2) {
+                //collection.setPower(-.8);
+                if (transferTimer.seconds() >= .1) {
+                    //collection.setPower(0);
                     target = retracted;
                     extendState = ExtendState.START;
                     deliveryState = DeliveryState.COLLECT;
@@ -240,7 +247,7 @@ public class PIDF {
                 }
                 else if (theOpMode.gamepad1.dpad_down) {
                     deliveryState = DeliveryState.COLLECT;
-                    deliveryS.setPosition(frontSpec);
+                   // deliveryS.setPosition(frontSpec);
                 }
             case DELIVER:
             case SPECIMEN:
@@ -345,6 +352,71 @@ public class PIDF {
         else {
             theOpMode.telemetry.addData("Beam", "Not Broken");
         }
+    }
+    public class CollectRun implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (extendState) {
+                //Fully Retracted in transfer position
+                case START:
+                    collection.setPower(0);
+                    extendState = ExtendState.EXTEND;
+
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+
+                    break;
+                // Rotate to collecting position
+                case EXTEND:
+                    target = 450;
+                    deliveryS.setPosition(midPos);
+                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
+                        collection.setPower(.8);
+                        extendState = ExtendState.EXTENDED;
+                    }
+                    break;
+                case EXTENDED:
+                    // If we collect a specimen, retract extension, rotate to transfer position, stop collection
+                    if (!cBeam.getState()) {
+                        target = retracted;
+                        deliveryS.setPosition(transferPos);
+                        //target = retracted;
+                        collection.setPower(0);
+                        extendState = ExtendState.RETRACT;
+
+
+                    }
+                    break;
+                case RETRACT:
+                    deliveryS.setPosition(transferPos);
+                    claw.setPosition(open);
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
+                        rCollection.setPosition(transfer);
+                        lCollection.setPosition(transfer);
+                        collection.setPower(.5);
+
+                    }
+                    if (!dBeam.getState()) {
+                        extendState = ExtendState.START;
+                        deliveryState = DeliveryState.COLLECT;
+                        return false;
+                    }
+
+
+                    break;
+
+                default:
+                    extendState = ExtendState.START;
+            }
+            controller.setPID(p, i, d);
+            int curPos = extend.getCurrentPosition();
+            double power = controller.calculate(curPos, target);
+            extend.setPower(power);
+            return true;
+        }
+    }
+    public Action collectRun() {
+        return new CollectRun();
     }
 
 

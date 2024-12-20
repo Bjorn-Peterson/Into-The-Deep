@@ -15,6 +15,8 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 
 
@@ -86,6 +88,7 @@ public class CollectionActions {
         dBeam.setMode(DigitalChannel.Mode.INPUT);
         lSwitch = hardwareMap.get(DigitalChannel.class, "lSwitch");
         lSwitch.setMode(DigitalChannel.Mode.INPUT);
+
     }
 
 
