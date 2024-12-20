@@ -17,7 +17,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.NewRobot.AutoActions.CollectionActions;
 import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 
 
@@ -34,15 +33,13 @@ public class PIDF {
     }
     public enum DeliveryState {
         START,
-        COLLECT,
-        DELIVER,
         SPECIMEN
     }
     ExtendState extendState = ExtendState.START;
 
     DeliveryState deliveryState = DeliveryState.START;
     private PIDController controller;
-    public static double p = 0.011, i = 0.000001, d = 0.00008;
+    public static double p = 0.011, i = 0.00001, d = 0.00008;
     public static int target;
 
 
@@ -122,6 +119,9 @@ public class PIDF {
         else if (theOpMode.gamepad1.dpad_left) {
             deliveryS.setPosition(midPos);
         }
+        if (theOpMode.gamepad1.b) {
+            collection.setPower(-.7);
+        }
         switch (extendState) {
 
             //Fully Retracted in transfer position
@@ -144,9 +144,7 @@ public class PIDF {
                     extendState = ExtendState.MID;
                     collection.setPower(.95);
                 }
-                if (theOpMode.gamepad1.b) {
-                    extendState = ExtendState.EJECT;
-                }
+
 
                 break;
                 // Rotate to collecting position
@@ -188,7 +186,7 @@ public class PIDF {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                     if (Math.abs(extend.getCurrentPosition()-retracted) < 20 && !lSwitch.getState()) {
-                        collection.setPower(.7);
+                        collection.setPower(.65);
                     }
                 }
                 if (!dBeam.getState()) {
@@ -208,12 +206,10 @@ public class PIDF {
                     //collection.setPower(0);
                     target = retracted;
                     extendState = ExtendState.START;
-                    deliveryState = DeliveryState.COLLECT;
+                    claw.setPosition(closed);
+                    deliveryS.setPosition(backSpec);
                 }
                 break;
-            case EJECT:
-                collection.setPower(-.6);
-
             default:
                 extendState = ExtendState.START;
         }
@@ -235,34 +231,17 @@ public class PIDF {
 
 
 
+
+
+
         switch (deliveryState) {
+            case START:
+                if (theOpMode.gamepad1.dpad_left) {
 
-            case COLLECT:
-                    claw.setPosition(closed);
-                    deliveryS.setPosition(backSpec);
-
-                if (theOpMode.gamepad1.dpad_up) {
-                    deliveryState = DeliveryState.DELIVER;
-                    deliveryS.setPosition(backSpec);
                 }
-                else if (theOpMode.gamepad1.dpad_down) {
-                    deliveryState = DeliveryState.COLLECT;
-                   // deliveryS.setPosition(frontSpec);
-                }
-            case DELIVER:
-            case SPECIMEN:
-
-
-
-
-
-            default: deliveryState = DeliveryState.START;
-            if (theOpMode.gamepad1.dpad_down && deliveryState != DeliveryState.START) {
-                deliveryS.setPosition(transferPos);
+                break;
+            default:
                 deliveryState = DeliveryState.START;
-            }
-
-
         }
     }
 
@@ -272,79 +251,6 @@ public class PIDF {
 
 
 
-
-
-
-
-
-
-
-    public void auto(int target) {
-        while (((LinearOpMode) theOpMode).opModeIsActive()) {
-            switch (extendState) {
-
-                //Fully Retracted in transfer position
-                case START:
-                    collection.setPower(0);
-                    extendState = ExtendState.EXTEND;
-
-                    rCollection.setPosition(collect);
-                    lCollection.setPosition(collect);
-
-                    break;
-                // Rotate to collecting position
-                case EXTEND:
-                    deliveryS.setPosition(midPos);
-                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
-                        collection.setPower(.8);
-                        extendState = ExtendState.EXTENDED;
-                    }
-                    break;
-                case EXTENDED:
-                    // If we collect a specimen, retract extension, rotate to transfer position, stop collection
-                    if (!cBeam.getState()) {
-                        target = retracted;
-                        deliveryS.setPosition(transferPos);
-                        //target = retracted;
-                        collection.setPower(0);
-                        extendState = ExtendState.RETRACT;
-                        theOpMode.telemetry.addData("Beam", "Broken");
-
-                    }
-                    break;
-                case RETRACT:
-                    deliveryS.setPosition(transferPos);
-                    claw.setPosition(open);
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
-                        rCollection.setPosition(transfer);
-                        lCollection.setPosition(transfer);
-                        collection.setPower(.5);
-
-                    }
-                    if (!dBeam.getState()) {
-                        extendState = ExtendState.START;
-                        deliveryState = DeliveryState.COLLECT;
-                    }
-
-
-                    break;
-
-                default:
-                    extendState = ExtendState.START;
-            }
-            controller.setPID(p, i, d);
-            int curPos = extend.getCurrentPosition();
-            double power = controller.calculate(curPos, target);
-            extend.setPower(power);
-            theOpMode.telemetry.addData("pos", curPos);
-            theOpMode.telemetry.addData("target", target);
-            theOpMode.telemetry.addData("Current State", extendState);
-            theOpMode.telemetry.update();
-
-        }
-
-
-    }
     public void test() {
         if (!dBeam.getState()) {
             theOpMode.telemetry.addData("Beam", "Broken");
@@ -353,6 +259,28 @@ public class PIDF {
             theOpMode.telemetry.addData("Beam", "Not Broken");
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public class CollectRun implements Action {
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
@@ -398,7 +326,8 @@ public class PIDF {
                     }
                     if (!dBeam.getState()) {
                         extendState = ExtendState.START;
-                        deliveryState = DeliveryState.COLLECT;
+                        claw.setPosition(closed);
+                        deliveryS.setPosition(backSpec);
                         return false;
                     }
 

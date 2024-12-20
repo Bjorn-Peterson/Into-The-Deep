@@ -25,6 +25,14 @@ public class Lift {
         LIFTED,
         DOWN
     }
+    public enum TeleState {
+        START,
+        TOP,
+        LOW,
+        SPECIMEN,
+        MANUAL
+    }
+    TeleState teleState = TeleState.START;
     LiftState liftState = LiftState.START;
     private PIDController controller;
     public static double p = 0.02, i = 0, d = 0.002;
@@ -60,16 +68,22 @@ public class Lift {
     }
 
     public void teleLift() {
-
-        if (theOpMode.gamepad2.right_trigger > .05) {
-            lift.setPower(theOpMode.gamepad2.right_trigger);
-
-        } else if (theOpMode.gamepad2.left_trigger > .05) {
-            lift.setPower(-theOpMode.gamepad2.left_trigger);
-
-        } else {
-            lift.setPower(0);
+        /*
+        switch (teleState) {
+            case START:
+                if (theOpMode.gamepad2.right_trigger > .05 || theOpMode.gamepad2.left_trigger > .05) {
+                    teleState = TeleState.MANUAL;
+                }
+                if (theOpMode.gamepad1.dpad_right) {
+                    teleState = TeleState.TOP;
+                }
+                break;
+            default: teleState = TeleState.START;
         }
+
+
+
+         */
     }
 
     public void soloControls() {
