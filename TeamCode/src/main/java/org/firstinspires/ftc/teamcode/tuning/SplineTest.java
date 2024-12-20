@@ -19,9 +19,7 @@ public final class SplineTest extends LinearOpMode {
 
             Actions.runBlocking(
                 drive.actionBuilder(beginPose)
-                        .lineToY(10)
-
-                        .lineToX(10)
+                        .splineTo(new Vector2d(15, 20), 0)
                         .build());
         } else if (TuningOpModes.DRIVE_CLASS.equals(TankDrive.class)) {
             TankDrive drive = new TankDrive(hardwareMap, beginPose);

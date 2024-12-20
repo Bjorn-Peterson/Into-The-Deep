@@ -37,8 +37,8 @@ public class BlueSideTestAuto extends LinearOpMode {
                                 .waitSeconds(2);
         Action toDeliver = drive.actionBuilder(initialPose).
                 setTangent(Math.toRadians(35)).
-                splineToLinearHeading(new Pose2d(20,20,35), Math.toRadians(35)).
-                afterDisp(0, pidf.collectRun()).
+                splineToLinearHeading(new Pose2d(20,20,Math.toRadians(-35)), Math.toRadians(0)).
+                afterDisp(0, lift.liftAction()).
                 build();
         Action collect1 = drive.actionBuilder(initialPose).
                 setTangent(Math.toRadians(35)).
@@ -54,6 +54,6 @@ public class BlueSideTestAuto extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         toDeliver,
-                        lift.liftAction()));
+                        pidf.collectRun()));
     }
 }

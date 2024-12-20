@@ -27,8 +27,8 @@ public class Lift {
     }
     LiftState liftState = LiftState.START;
     private PIDController controller;
-    public static double p = 0.015, i = 0, d = 0.0015;
-    public static double f = 0.1;
+    public static double p = 0.02, i = 0, d = 0.002;
+    public static double f = 0.2;
     public static int target;
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
     double closed = .87;
