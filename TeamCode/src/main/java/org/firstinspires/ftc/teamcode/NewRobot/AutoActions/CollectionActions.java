@@ -19,7 +19,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 
-
 public class CollectionActions {
     public enum ExtendState {
         START,

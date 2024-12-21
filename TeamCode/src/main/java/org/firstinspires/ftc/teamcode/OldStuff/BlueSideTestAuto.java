@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.NewRobot.Lift;
 @Autonomous(name = "BLUE_TEST_AUTO_PIXEL", group = "Autonomous")
 public class BlueSideTestAuto extends LinearOpMode {
 
+
     @Override
     public void runOpMode() {
         Pose2d initialPose = new Pose2d(0, 0, 0);

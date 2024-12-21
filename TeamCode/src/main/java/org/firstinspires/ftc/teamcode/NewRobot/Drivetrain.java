@@ -12,7 +12,6 @@ public class Drivetrain {
     DcMotor rightBackDrive;
     private OpMode theOpMode;
 
-
     BNO055IMU imuCH;
     double drvTrnSpd = .75;
 

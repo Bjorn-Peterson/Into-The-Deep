@@ -15,8 +15,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import java.util.ArrayList;
 
 public class Lift {
     public enum LiftState {
