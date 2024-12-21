@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
-//Sensor
 
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -16,8 +14,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
 
 
 public class PIDF {
@@ -60,7 +56,7 @@ public class PIDF {
     double xHeight = .5;
     double closed = .87;
     double open = .754;
-    double frontSpec = .128;
+    double frontSpec = .12;
     double backSpec = .59;
     double transferPos = .18;
     double midPos = .2;
@@ -84,7 +80,6 @@ public class PIDF {
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
-        //collection.setDirection(DcMotorSimple.Direction.REVERSE);
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
         colorSensor.getNormalizedColors();
 
@@ -237,9 +232,16 @@ public class PIDF {
         switch (deliveryState) {
             case START:
                 if (theOpMode.gamepad1.dpad_left) {
-
+                    deliveryState = DeliveryState.SPECIMEN;
                 }
                 break;
+            case SPECIMEN:
+                deliveryS.setPosition(backSpec);
+                if (!dBeam.getState()) {
+                    claw.setPosition(closed);
+                    deliveryS.setPosition(frontSpec);
+                    deliveryState = DeliveryState.START;
+                }
             default:
                 deliveryState = DeliveryState.START;
         }

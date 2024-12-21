@@ -84,6 +84,49 @@ public class Lift {
 
 
          */
+        switch (liftState) {
+            case START:
+                deliveryS.setPosition(backSpec);
+                claw.setPosition(closed);
+                if (theOpMode.gamepad2.x) {
+                    liftState = LiftState.LIFT;
+                }
+                break;
+            case LIFT:
+                target = 1000;
+                if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                    claw.setPosition(open);
+                    liftTimer.reset();
+                    liftState = LiftState.LIFTED;
+                }
+                break;
+            case LIFTED:
+                if (liftTimer.seconds() >= .5) {
+                    target = 40;
+                    deliveryS.setPosition(midPos);
+                    liftState = LiftState.DOWN;
+
+                }
+                break;
+            case DOWN:
+                if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                    liftState = LiftState.START;
+                }
+                break;
+            default:
+                liftState = LiftState.START;
+
+        }
+        controller.setPID(p, i, d);
+        int curPos = lift.getCurrentPosition();
+        double pid = controller.calculate(curPos, target);
+        double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+        double power = pid + ff;
+        lift.setPower(power);
+        theOpMode.telemetry.addData("LiftState", liftState);
+        theOpMode.telemetry.addData("target", target);
+        theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
+        theOpMode.telemetry.update();
     }
 
     public void soloControls() {
