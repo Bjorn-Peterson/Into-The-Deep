@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+
 public class PIDF {
     public enum ExtendState {
         START,
@@ -23,18 +24,15 @@ public class PIDF {
         EXTEND,
         EXTENDED,
         EJECT,
-        TRANSFER
+        TRANSFER,
+        SPECIMEN
 
     }
-    public enum DeliveryState {
-        START,
-        SPECIMEN
-    }
+
     ExtendState extendState = ExtendState.START;
 
-    DeliveryState deliveryState = DeliveryState.START;
     private PIDController controller;
-    public static double p = 0.011, i = 0.00001, d = 0.00008;
+    public static double p = 0.01, i = 0.00001, d = 0.00008;
     public static int target;
 
 
@@ -53,12 +51,15 @@ public class PIDF {
     double collect = .68;
     double transfer = .55;
     double xHeight = .5;
+    double initPos = .35;
+
     double closed = .87;
     double open = .754;
+    double specClosed = .85;
     double frontSpec = .12;
     double backSpec = .59;
     double transferPos = .18;
-    double midPos = .2;
+    double midPos = .3;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
@@ -124,6 +125,9 @@ public class PIDF {
                 rCollection.setPosition(xHeight);
                 lCollection.setPosition(xHeight);
 
+                if (theOpMode.gamepad1.dpad_left) {
+                    extendState = ExtendState.SPECIMEN;
+                }
                 // Start extending, turn on collection
                 if (theOpMode.gamepad1.x) {
                     target = extended;
@@ -142,6 +146,14 @@ public class PIDF {
 
                 break;
                 // Rotate to collecting position
+            case SPECIMEN:
+                deliveryS.setPosition(backSpec);
+                if (!dBeam.getState()) {
+                    claw.setPosition(specClosed);
+                    deliveryS.setPosition(frontSpec);
+                    extendState = ExtendState.START;
+                }
+
             case EXTEND:
                 if (Math.abs(extend.getCurrentPosition() - extended) < 100 && theOpMode.gamepad1.x) {
                     extendState = ExtendState.EXTENDED;
@@ -179,7 +191,7 @@ public class PIDF {
                 if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
-                    if (Math.abs(extend.getCurrentPosition()-retracted) < 20 && !lSwitch.getState()) {
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
                         collection.setPower(.65);
                     }
                 }
@@ -221,29 +233,9 @@ public class PIDF {
         theOpMode.telemetry.addData("pos", curPos);
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.addData("Current State", extendState);
+        theOpMode.telemetry.addData("power", power);
         theOpMode.telemetry.update();
 
-
-
-
-
-
-        switch (deliveryState) {
-            case START:
-                if (theOpMode.gamepad1.dpad_left) {
-                    deliveryState = DeliveryState.SPECIMEN;
-                }
-                break;
-            case SPECIMEN:
-                deliveryS.setPosition(backSpec);
-                if (!dBeam.getState()) {
-                    claw.setPosition(closed);
-                    deliveryS.setPosition(frontSpec);
-                    deliveryState = DeliveryState.START;
-                }
-            default:
-                deliveryState = DeliveryState.START;
-        }
     }
 
 
@@ -290,14 +282,14 @@ public class PIDF {
                 case START:
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
-
+                    deliveryS.setPosition(midPos);
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
 
                     break;
                 // Rotate to collecting position
                 case EXTEND:
-                    target = 450;
+                    target = 650;
                     deliveryS.setPosition(midPos);
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
                         collection.setPower(.8);
@@ -313,26 +305,36 @@ public class PIDF {
                         collection.setPower(0);
                         extendState = ExtendState.RETRACT;
 
-
                     }
                     break;
                 case RETRACT:
                     deliveryS.setPosition(transferPos);
                     claw.setPosition(open);
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
-                        collection.setPower(.5);
-
+                        if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
+                            collection.setPower(.65);
+                        }
                     }
                     if (!dBeam.getState()) {
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
+                    }
+
+                    break;
+                case TRANSFER:
+                    target = shortPos;
+                    //collection.setPower(-.8);
+                    if (transferTimer.seconds() >= .1) {
+                        //collection.setPower(0);
+                        target = retracted;
                         extendState = ExtendState.START;
                         claw.setPosition(closed);
                         deliveryS.setPosition(backSpec);
                         return false;
                     }
-
-
                     break;
 
                 default:
@@ -348,6 +350,16 @@ public class PIDF {
     public Action collectRun() {
         return new CollectRun();
     }
-
-
+    public class InitPositions implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            rCollection.setPosition(initPos);
+            lCollection.setPosition(initPos);
+            deliveryS.setPosition(midPos);
+                    return false;
+        }
+    }
+    public Action initPositions() {
+        return new InitPositions();
+    }
 }

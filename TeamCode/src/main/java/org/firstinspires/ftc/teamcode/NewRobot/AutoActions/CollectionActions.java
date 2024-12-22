@@ -14,10 +14,12 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.NewRobot.Delivery;
+import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 public class CollectionActions {
     public enum ExtendState {
@@ -26,20 +28,11 @@ public class CollectionActions {
         MID,
         EXTEND,
         EXTENDED,
-        EJECT
+        EJECT,
+        TRANSFER
 
     }
-
-    public enum DeliveryState {
-        START,
-        COLLECT,
-        DELIVER,
-        SPECIMEN
-    }
-
     ExtendState extendState = ExtendState.START;
-
-    DeliveryState deliveryState = DeliveryState.START;
     private PIDController controller;
     public static double p = 0.011, i = 0.000001, d = 0.00008;
     public static int target;
@@ -51,21 +44,24 @@ public class CollectionActions {
     public Servo lCollection;
     public Servo claw;
     public Servo deliveryS;
-    int extended = 645;
-    int retracted = 0;
+    int extended = 655;
+    int retracted = 5;
     int mid = 400;
-    double collect = .651;
-    double transfer = .57;
-    double xHeight = .46;
+    int shortPos = 100;
+
+    double collect = .68;
+    double transfer = .55;
+    double xHeight = .5;
     double closed = .87;
     double open = .754;
     double frontSpec = .128;
-    double backSpec = .56;
-    double transferPos = .125;
-    double midPos = .2;
+    double backSpec = .59;
+    double transferPos = .18;
+    double midPos = .3;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
+    ElapsedTime transferTimer = new ElapsedTime();
 
     public CollectionActions(HardwareMap hardwareMap) {
         controller = new PIDController(p, i, d);
@@ -89,71 +85,6 @@ public class CollectionActions {
         lSwitch.setMode(DigitalChannel.Mode.INPUT);
 
     }
-
-
-    public Action collect() {
-        return telemetryPacket -> {
-            switch (extendState) {
-                //Fully Retracted in transfer position
-                case START:
-                    telemetryPacket.addLine("does this work?");
-                    collection.setPower(0);
-                    extendState = ExtendState.EXTEND;
-
-                    rCollection.setPosition(collect);
-                    lCollection.setPosition(collect);
-
-                    break;
-                // Rotate to collecting position
-                case EXTEND:
-                    deliveryS.setPosition(midPos);
-                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
-                        collection.setPower(.8);
-                        extendState = ExtendState.EXTENDED;
-                    }
-                    break;
-                case EXTENDED:
-                    // If we collect a specimen, retract extension, rotate to transfer position, stop collection
-                    if (!cBeam.getState()) {
-                        target = retracted;
-                        deliveryS.setPosition(transferPos);
-                        //target = retracted;
-                        collection.setPower(0);
-                        extendState = ExtendState.RETRACT;
-
-
-                    }
-                    break;
-                case RETRACT:
-                    deliveryS.setPosition(transferPos);
-                    claw.setPosition(open);
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
-                        rCollection.setPosition(transfer);
-                        lCollection.setPosition(transfer);
-                        collection.setPower(.5);
-
-                    }
-                    if (!dBeam.getState()) {
-                        extendState = ExtendState.START;
-                        deliveryState = DeliveryState.COLLECT;
-                    }
-
-
-                    break;
-
-                default:
-                    extendState = ExtendState.START;
-            }
-            controller.setPID(p, i, d);
-            int curPos = extend.getCurrentPosition();
-            double power = controller.calculate(curPos, target);
-            extend.setPower(power);
-
-
-            return false;
-
-        };
-    }
     public class CollectRun implements Action {
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
@@ -169,7 +100,7 @@ public class CollectionActions {
                     break;
                 // Rotate to collecting position
                 case EXTEND:
-                    target = 450;
+                    target = 650;
                     deliveryS.setPosition(midPos);
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
                         collection.setPower(.8);
@@ -191,19 +122,31 @@ public class CollectionActions {
                 case RETRACT:
                     deliveryS.setPosition(transferPos);
                     claw.setPosition(open);
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
-                        collection.setPower(.5);
-
+                        if (Math.abs(extend.getCurrentPosition()-retracted) < 20 && !lSwitch.getState()) {
+                            collection.setPower(.65);
+                        }
                     }
                     if (!dBeam.getState()) {
-                        extendState = ExtendState.START;
-                        deliveryState = DeliveryState.COLLECT;
-                        return false;
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
                     }
 
-
+                    break;
+                case TRANSFER:
+                    target = shortPos;
+                    //collection.setPower(-.8);
+                    if (transferTimer.seconds() >= .1) {
+                        //collection.setPower(0);
+                        target = retracted;
+                        extendState = ExtendState.START;
+                        claw.setPosition(closed);
+                        deliveryS.setPosition(backSpec);
+                        return false;
+                    }
                     break;
 
                 default:

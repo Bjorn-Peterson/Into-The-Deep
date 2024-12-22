@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.InstantAction;
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -28,16 +29,20 @@ public class BlueSideTestAuto extends LinearOpMode {
 
         Action toDeliver = drive.actionBuilder(initialPose).
                 setTangent(Math.toRadians(35)).
-                splineToLinearHeading(new Pose2d(15,20,Math.toRadians(-35)), Math.toRadians(0)).
-                afterDisp(0, new InstantAction(lift::liftAction)).
+                splineToLinearHeading(new Pose2d(11,25,Math.toRadians(-23)), Math.toRadians(0)).
+                build();
+        Action score2 = drive.actionBuilder(initialPose).
+                strafeToLinearHeading(new Vector2d(10, 25), Math.toRadians(-5)).
                 build();
 
+        Actions.runBlocking(pidf.initPositions());
 
             waitForStart();
 
         Actions.runBlocking(
                 new SequentialAction(
-                        toDeliver,
-                        pidf.collectRun()));
+                        new ParallelAction(toDeliver, lift.liftAction()),
+                        pidf.collectRun(),
+                        new ParallelAction(score2, lift.liftAction())));
     }
 }
