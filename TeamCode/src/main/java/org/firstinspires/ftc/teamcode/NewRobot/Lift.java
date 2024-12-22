@@ -6,10 +6,13 @@ import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 public class Lift {
     public enum LiftState {
@@ -49,6 +52,9 @@ public class Lift {
     private ElapsedTime liftTimer = new ElapsedTime();
     private OpMode theOpMode;
     double countsPerInch;
+    boolean usePIDF = false;
+    PIDF pidf;
+    DigitalChannel dBeam;
 
 
     public Lift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
@@ -61,70 +67,29 @@ public class Lift {
         lift.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
+        dBeam = hardwareMap.get(DigitalChannel.class, "dBeam");
+        dBeam.setMode(DigitalChannel.Mode.INPUT);
     }
 
     public void teleLift() {
+        if (pidf.deliveryS.getPosition() == backSpec && dBeam.getState()) {
+            usePIDF = true;
+        }
 
-        switch (teleState) {
-            case START:
-                if (theOpMode.gamepad2.right_trigger > .05 || theOpMode.gamepad2.left_trigger > .05) {
-                    teleState = TeleState.MANUAL;
-                }
-                if (theOpMode.gamepad1.dpad_right) {
-                    teleState = TeleState.TOP;
-                }
-                break;
-            case MANUAL:
-                if (theOpMode.gamepad2.right_trigger > .05) {
-                    lift.setPower(theOpMode.gamepad2.right_trigger);
-                }
+        if (theOpMode.gamepad1.right_trigger > .05) {
+            lift.setPower(theOpMode.gamepad1.right_trigger);
+        }
+        else if (theOpMode.gamepad1.left_trigger > .05) {
+            lift.setPower(-theOpMode.gamepad1.left_trigger);
+        }
 
-                else if (theOpMode.gamepad2.left_trigger > .05) {
-                    lift.setPower(-theOpMode.gamepad2.left_trigger);
-                }
-                else {
-                    lift.setPower(0);
-                }
-                break;
-            case TOP:
-                target = 1600;
-            default: teleState = TeleState.START;
+        else if (usePIDF) {
+            if (!dBeam.getState()) {
+                target = 700;
+            }
         }
 
 
-        switch (liftState) {
-            case START:
-                deliveryS.setPosition(backSpec);
-                claw.setPosition(closed);
-                if (theOpMode.gamepad2.x) {
-                    liftState = LiftState.LIFT;
-                }
-                break;
-            case LIFT:
-                target = 1600;
-                if (Math.abs(lift.getCurrentPosition() - target) < 20) {
-                    claw.setPosition(open);
-                    liftTimer.reset();
-                    liftState = LiftState.LIFTED;
-                }
-                break;
-            case LIFTED:
-                if (liftTimer.seconds() >= .5) {
-                    target = 40;
-                    deliveryS.setPosition(midPos);
-                    liftState = LiftState.DOWN;
-
-                }
-                break;
-            case DOWN:
-                if (Math.abs(lift.getCurrentPosition() - target) < 20) {
-                    liftState = LiftState.START;
-                }
-                break;
-            default:
-                liftState = LiftState.START;
-
-        }
         controller.setPID(p, i, d);
         int curPos = lift.getCurrentPosition();
         double pid = controller.calculate(curPos, target);
@@ -155,7 +120,6 @@ public class Lift {
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (liftState) {
                 case START:
-                    lift.setPower(0);
                     deliveryS.setPosition(backSpec);
                     claw.setPosition(closed);
                     liftState = LiftState.LIFT;
@@ -178,6 +142,8 @@ public class Lift {
                 case DOWN:
                     target = 20;
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                        lift.setPower(0);
+                        liftState = LiftState.START;
                         return false;
 
                     }

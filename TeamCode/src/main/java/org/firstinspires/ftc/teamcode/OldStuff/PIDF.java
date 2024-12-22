@@ -114,8 +114,8 @@ public class PIDF {
         else if (theOpMode.gamepad1.dpad_left) {
             deliveryS.setPosition(midPos);
         }
-        if (theOpMode.gamepad1.b) {
-            collection.setPower(-.7);
+        if (theOpMode.gamepad1.ps) {
+            collection.setPower(-.85);
         }
         switch (extendState) {
 
