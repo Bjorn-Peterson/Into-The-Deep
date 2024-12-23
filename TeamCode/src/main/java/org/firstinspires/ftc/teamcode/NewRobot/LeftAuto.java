@@ -43,7 +43,7 @@ public class LeftAuto extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        new ParallelAction(preload, lift.liftAction()),
+                        preload,
                         lift.specDeliver(),
                         pidf.collectRun()));
     }

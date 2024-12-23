@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.NewRobot.Lift;
-
+import org.opencv.core.Mat;
 
 
 @Config
@@ -29,10 +29,23 @@ public class BlueSideTestAuto extends LinearOpMode {
 
         Action toDeliver = drive.actionBuilder(initialPose).
                 setTangent(Math.toRadians(35)).
-                splineToLinearHeading(new Pose2d(11,25,Math.toRadians(-23)), Math.toRadians(0)).
+                splineToLinearHeading(new Pose2d(12,25,Math.toRadians(-25)), Math.toRadians(0)).
                 build();
         Action score2 = drive.actionBuilder(initialPose).
-                strafeToLinearHeading(new Vector2d(10, 25), Math.toRadians(-5)).
+                turnTo(Math.toRadians(-9)).
+                build();
+        Action collect3 = drive.actionBuilder(initialPose).
+                strafeToLinearHeading(new Vector2d(10, 20), Math.toRadians(25)).
+                build();
+        Action score4 = drive.actionBuilder(initialPose).
+                turnTo(Math.toRadians(-25)).
+                build();
+        Action sub = drive.actionBuilder(initialPose).
+                splineTo(new Vector2d(50, -10), Math.toRadians(-90)).
+                build();
+        Action afterSub = drive.actionBuilder(initialPose).
+                setReversed(true).
+                splineToLinearHeading(new Pose2d(-5, 5, Math.toRadians(-10)), Math.toRadians(0)).
                 build();
 
         Actions.runBlocking(pidf.initPositions());
@@ -43,6 +56,13 @@ public class BlueSideTestAuto extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(toDeliver, lift.liftAction()),
                         pidf.collectRun(),
-                        new ParallelAction(score2, lift.liftAction())));
+                        lift.liftAction(),
+                        new ParallelAction(score2, pidf.collectRun()),
+                        lift.liftAction(),
+                        new ParallelAction(collect3, pidf.collectRun()),
+                        new ParallelAction(score4, lift.liftAction()),
+                        sub,
+                        pidf.collectRun(),
+                        new ParallelAction(afterSub, lift.liftAction())));
     }
 }

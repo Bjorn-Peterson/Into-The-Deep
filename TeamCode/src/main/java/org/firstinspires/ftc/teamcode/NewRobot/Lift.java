@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -34,16 +35,16 @@ public class Lift {
     LiftState liftState = LiftState.START;
     private PIDController controller;
     public static double p = 0.033, i = 0, d = 0.001;
-    public static double f = 0.01;
+    public static double f = 0.03;
     public static int target;
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
     double closed = .87;
     double open = .754;
-    double frontSpec = .12;
+    double frontSpec = .118;
     double backSpec = .59;
     double transferPos = .18;
     double midPos = .3;
-    double specClosed = .85;
+    double specClosed = .83;
 
 
     private DcMotorEx lift;
@@ -52,9 +53,8 @@ public class Lift {
     private ElapsedTime liftTimer = new ElapsedTime();
     private OpMode theOpMode;
     double countsPerInch;
-    boolean usePIDF = false;
-    PIDF pidf;
     DigitalChannel dBeam;
+    PIDF pidf;
 
 
     public Lift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
@@ -64,6 +64,7 @@ public class Lift {
         lift = hardwareMap.get(DcMotorEx.class, "lift");
 
         lift.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
@@ -72,34 +73,52 @@ public class Lift {
     }
 
     public void teleLift() {
-        if (pidf.deliveryS.getPosition() == backSpec && dBeam.getState()) {
-            usePIDF = true;
-        }
 
-        if (theOpMode.gamepad1.right_trigger > .05) {
-            lift.setPower(theOpMode.gamepad1.right_trigger);
-        }
-        else if (theOpMode.gamepad1.left_trigger > .05) {
-            lift.setPower(-theOpMode.gamepad1.left_trigger);
-        }
-
-        else if (usePIDF) {
-            if (!dBeam.getState()) {
-                target = 700;
+        switch (teleState) {
+            case START:
+            if (theOpMode.gamepad1.dpad_left && !dBeam.getState()) {
+                teleState = TeleState.SPECIMEN;
             }
-        }
+            if (theOpMode.gamepad1.right_trigger > 0 || theOpMode.gamepad1.left_trigger > 0) {
+                teleState = TeleState.MANUAL;
+            }
 
+            break;
+            case SPECIMEN:
+                target = 800;
+                controller.setPID(p, i, d);
+                int curPos = lift.getCurrentPosition();
+                double pid = controller.calculate(curPos, target);
+                double ff = Math.cos(Math.toRadians(target)) * f;
+                double power = pid + ff;
+                lift.setPower(power);
+                if (theOpMode.gamepad1.right_trigger > 0 || theOpMode.gamepad1.left_trigger > 0) {
+                    teleState = TeleState.MANUAL;
+                }
 
-        controller.setPID(p, i, d);
-        int curPos = lift.getCurrentPosition();
-        double pid = controller.calculate(curPos, target);
-        double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
-        double power = pid + ff;
-        lift.setPower(power);
-        theOpMode.telemetry.addData("LiftState", liftState);
+                break;
+            case MANUAL:
+                if (theOpMode.gamepad1.right_trigger > 0) {
+                    lift.setPower(theOpMode.gamepad1.right_trigger);
+                } else if (theOpMode.gamepad1.left_trigger > 0) {
+                    lift.setPower(-theOpMode.gamepad1.left_trigger);
+
+                }
+                else if (theOpMode.gamepad1.dpad_left) {
+                    teleState = TeleState.SPECIMEN;
+                }
+                else {
+                    lift.setPower(0);
+                }
+                break;
+            default: teleState = TeleState.START;
+            }
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
+        theOpMode.telemetry.addData("Current State", teleState);
         theOpMode.telemetry.update();
+
+
     }
 
     public void soloControls() {
@@ -140,7 +159,7 @@ public class Lift {
                     }
                     break;
                 case DOWN:
-                    target = 20;
+                    target = -20;
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
                         lift.setPower(0);
                         liftState = LiftState.START;
@@ -194,7 +213,7 @@ public class Lift {
                     }
                     break;
                 case DOWN:
-                    target = 40;
+                    target = -20;
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
                         liftState = LiftState.START;
                         return false;
