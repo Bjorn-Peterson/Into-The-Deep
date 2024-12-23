@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -26,7 +27,8 @@ public class PIDF {
         EXTENDED,
         EJECT,
         TRANSFER,
-        SPECIMEN
+        SPECIMEN,
+        RESET
 
     }
 
@@ -64,6 +66,7 @@ public class PIDF {
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
+    DigitalChannel touch;
     NormalizedColorSensor colorSensor;
     double sensorReading;
     ElapsedTime transferTimer = new ElapsedTime();
@@ -83,6 +86,8 @@ public class PIDF {
         collection = hardwareMap.get(DcMotorEx.class, "collection");
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
         colorSensor.getNormalizedColors();
+        touch = hardwareMap.get(DigitalChannel.class, "touch");
+        touch.setMode(DigitalChannel.Mode.INPUT);
 
         cBeam = hardwareMap.get(DigitalChannel.class, "beam");
         cBeam.setMode(DigitalChannel.Mode.INPUT);
@@ -114,7 +119,10 @@ public class PIDF {
         }
 
         if (theOpMode.gamepad1.ps) {
-            collection.setPower(-.6);
+            extendState = ExtendState.EJECT;
+        }
+        if (theOpMode.gamepad2.ps) {
+            extendState = ExtendState.RESET;
         }
 
         switch (extendState) {
@@ -145,6 +153,14 @@ public class PIDF {
 
 
                 break;
+            case RESET:
+                extend.setPower(-.5);
+                if (touch.getState()) {
+                    extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    extend.setPower(0);
+                    extendState = ExtendState.START;
+                }
                 // Rotate to collecting position
             case SPECIMEN:
                 deliveryS.setPosition(backSpec);
@@ -216,6 +232,9 @@ public class PIDF {
                     claw.setPosition(closed);
                     deliveryS.setPosition(backSpec);
                 }
+                break;
+            case EJECT:
+                collection.setPower(-.6);
                 break;
             default:
                 extendState = ExtendState.START;
@@ -383,4 +402,30 @@ public class PIDF {
     public Action initPositions() {
         return new InitPositions();
     }
+    public class ExtendCollection implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (extendState) {
+                case START:
+                    extendState = ExtendState.EXTEND;
+                    deliveryS.setPosition(midPos);
+                case EXTEND:
+                    target = 500;
+                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
+                        extend.setPower(0);
+                        extendState = ExtendState.START;
+                        return false;
+                    }
+            }
+            controller.setPID(p, i, d);
+            int curPos = extend.getCurrentPosition();
+            double power = controller.calculate(curPos, target);
+            extend.setPower(power);
+            return true;
+        }
+    }
+    public Action extendCollection() {
+        return new ExtendCollection();
+    }
 }
+

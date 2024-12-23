@@ -45,7 +45,7 @@ public class BlueSideTestAuto extends LinearOpMode {
                 build();
         Action afterSub = drive.actionBuilder(initialPose).
                 setReversed(true).
-                splineToLinearHeading(new Pose2d(-5, 5, Math.toRadians(-10)), Math.toRadians(0)).
+                splineToLinearHeading(new Pose2d(10, 15, Math.toRadians(-20)), Math.toRadians(0)).
                 build();
 
         Actions.runBlocking(pidf.initPositions());

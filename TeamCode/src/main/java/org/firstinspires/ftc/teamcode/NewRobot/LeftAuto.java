@@ -35,7 +35,7 @@ public class LeftAuto extends LinearOpMode {
                 build();
         Action score = drive.actionBuilder(initialPose).
                 setTangent(0).
-        afterDisp(20, new InstantAction(lift::specDeliver)).
+        afterDisp(10, new InstantAction(lift::specDeliver)).
                 build();
 
 
