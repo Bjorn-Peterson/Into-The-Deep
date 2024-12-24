@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.NewRobot;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -22,7 +23,7 @@ public class LeftAuto extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        Pose2d initialPose = new Pose2d(0, 0, 0);
+        Pose2d initialPose = new Pose2d(50, -10, Math.toRadians(-90));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
 
         PIDF pidf = new PIDF(hardwareMap, this);
@@ -31,20 +32,16 @@ public class LeftAuto extends LinearOpMode {
 
         Action preload = drive.actionBuilder(initialPose).
                 setTangent(0).
-                strafeTo(new Vector2d(30, 0)).
+                strafeTo(new Vector2d(40, 0)).
                 build();
-        Action score = drive.actionBuilder(initialPose).
-                setTangent(0).
-        afterDisp(10, new InstantAction(lift::specDeliver)).
-                build();
+
+        Action afterSub = drive.actionBuilder(initialPose).build();
+
 
 
         waitForStart();
 
-        Actions.runBlocking(
-                new SequentialAction(
-                        preload,
-                        lift.specDeliver(),
-                        pidf.collectRun()));
+        Actions.runBlocking( new SequentialAction(afterSub));
+              //  new ParallelAction(afterSub, lift.liftAction()));
     }
 }

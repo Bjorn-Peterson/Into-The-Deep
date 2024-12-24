@@ -40,10 +40,10 @@ public class Lift {
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
     double closed = .87;
     double open = .754;
-    double frontSpec = .118;
-    double backSpec = .59;
+    double frontSpec = .14;
+    double backSpec = .6;
     double transferPos = .18;
-    double midPos = .3;
+    double midPos = .45;
     double specClosed = .83;
 
 
@@ -51,6 +51,7 @@ public class Lift {
     public Servo claw;
     public Servo deliveryS;
     private ElapsedTime liftTimer = new ElapsedTime();
+    private ElapsedTime deliveryTimer = new ElapsedTime();
     private OpMode theOpMode;
     double countsPerInch;
     DigitalChannel dBeam;
@@ -139,29 +140,31 @@ public class Lift {
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (liftState) {
                 case START:
-                    deliveryS.setPosition(backSpec);
                     claw.setPosition(closed);
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
                     target = 1345;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 30) {
+                    if (Math.abs(lift.getCurrentPosition() - target) < 200) {
+                        deliveryS.setPosition(backSpec);
                         claw.setPosition(open);
                         liftTimer.reset();
                         liftState = LiftState.LIFTED;
                     }
                     break;
                 case LIFTED:
-                    if (liftTimer.seconds() >= .5) {
+                    if (liftTimer.seconds() >= .3) {
                         deliveryS.setPosition(midPos);
-                        liftState = LiftState.DOWN;
 
+                        if (liftTimer.seconds() >= .42) {
+                            liftState = LiftState.DOWN;
+                        }
                     }
                     break;
                 case DOWN:
-                    target = -20;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 20) {
-                        lift.setPower(0);
+                    target = -30;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 15) {
+                        lift.setPower(-0.15);
                         liftState = LiftState.START;
                         return false;
 

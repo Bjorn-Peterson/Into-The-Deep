@@ -51,7 +51,7 @@ public class PIDF {
     int retracted = 0;
     int mid = 400;
     int shortPos = 100;
-    double collect = .66;
+    double collect = .653;
     double transfer = .55;
     double xHeight = .5;
     double initPos = .35;
@@ -59,10 +59,10 @@ public class PIDF {
     double closed = .87;
     double open = .754;
     double specClosed = .83;
-    double frontSpec = .12;
+    double frontSpec = .17;
     double backSpec = .59;
-    double transferPos = .18;
-    double midPos = .3;
+    double transferPos = .196;
+    double midPos = .45;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
@@ -319,9 +319,9 @@ public class PIDF {
                 case EXTEND:
                     target = 655;
                     deliveryS.setPosition(midPos);
-                    collection.setPower(.8);
+                    collection.setPower(.9);
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
-                        collection.setPower(.8);
+                        collection.setPower(.9);
                         extendState = ExtendState.EXTENDED;
                     }
                     break;
@@ -330,6 +330,8 @@ public class PIDF {
                     if (!cBeam.getState()) {
                         target = retracted;
                         deliveryS.setPosition(transferPos);
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
                         //target = retracted;
                         collection.setPower(0);
                         extendState = ExtendState.RETRACT;
@@ -343,9 +345,11 @@ public class PIDF {
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
                         if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
-                            collection.setPower(.65);
+                            collection.setPower(.7);
                         }
                         if (!dBeam.getState()) {
+                            rCollection.setPosition(xHeight);
+                            lCollection.setPosition(xHeight);
                             collection.setPower(0);
                             transferTimer.reset();
                             claw.setPosition(closed);
@@ -358,13 +362,13 @@ public class PIDF {
                 case TRANSFER:
                     target = shortPos;
                     //collection.setPower(-.8);
-                    if (transferTimer.seconds() >= .2) {
+                    if (transferTimer.seconds() >= .1) {
                         extend.setPower(0);
                         collection.setPower(0);
                         target = retracted;
                         extendState = ExtendState.START;
                         claw.setPosition(closed);
-                        deliveryS.setPosition(backSpec);
+                        deliveryS.setPosition(midPos);
                         return false;
                     }
                     break;
@@ -408,9 +412,10 @@ public class PIDF {
             switch (extendState) {
                 case START:
                     extendState = ExtendState.EXTEND;
-                    deliveryS.setPosition(midPos);
+                    rCollection.setPosition(xHeight);
+                    lCollection.setPosition(xHeight);
                 case EXTEND:
-                    target = 500;
+                    target = 300;
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
                         extend.setPower(0);
                         extendState = ExtendState.START;
@@ -427,5 +432,32 @@ public class PIDF {
     public Action extendCollection() {
         return new ExtendCollection();
     }
+    public class RetractCollection implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (extendState) {
+                case START:
+                    extendState = ExtendState.EXTEND;
+                    rCollection.setPosition(xHeight);
+                    lCollection.setPosition(xHeight);
+                case EXTEND:
+                    target = -20;
+                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
+                        extend.setPower(0);
+                        extendState = ExtendState.START;
+                        return false;
+                    }
+            }
+            controller.setPID(p, i, d);
+            int curPos = extend.getCurrentPosition();
+            double power = controller.calculate(curPos, target);
+            extend.setPower(power);
+            return true;
+        }
+    }
+    public Action retractCollection() {
+        return new RetractCollection();
+    }
 }
+
 
