@@ -80,7 +80,7 @@ public class Lift {
             if (theOpMode.gamepad1.dpad_left && !dBeam.getState()) {
                 teleState = TeleState.SPECIMEN;
             }
-            if (theOpMode.gamepad1.right_trigger > 0 || theOpMode.gamepad1.left_trigger > 0) {
+            if (theOpMode.gamepad1.right_trigger > 0.1 || theOpMode.gamepad1.left_trigger > 0.1) {
                 teleState = TeleState.MANUAL;
             }
 
@@ -93,15 +93,15 @@ public class Lift {
                 double ff = Math.cos(Math.toRadians(target)) * f;
                 double power = pid + ff;
                 lift.setPower(power);
-                if (theOpMode.gamepad1.right_trigger > 0 || theOpMode.gamepad1.left_trigger > 0) {
+                if (theOpMode.gamepad1.right_trigger > 0.1 || theOpMode.gamepad1.left_trigger > 0.1) {
                     teleState = TeleState.MANUAL;
                 }
 
                 break;
             case MANUAL:
-                if (theOpMode.gamepad1.right_trigger > 0) {
+                if (theOpMode.gamepad1.right_trigger > 0.1) {
                     lift.setPower(theOpMode.gamepad1.right_trigger);
-                } else if (theOpMode.gamepad1.left_trigger > 0) {
+                } else if (theOpMode.gamepad1.left_trigger > 0.1) {
                     lift.setPower(-theOpMode.gamepad1.left_trigger);
 
                 }
@@ -242,6 +242,7 @@ public class Lift {
         public Action specDeliver() {
         return new SpecDeliver();
         }
+
     }
 
 

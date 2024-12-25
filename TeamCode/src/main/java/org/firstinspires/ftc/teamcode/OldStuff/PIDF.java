@@ -35,7 +35,7 @@ public class PIDF {
     ExtendState extendState = ExtendState.START;
 
     private PIDController controller;
-    public static double p = 0.01, i = 0.00001, d = 0.00008;
+    public static double p = 0.011, i = 0.00001, d = 0.00008;
     public static int target;
 
 
@@ -61,7 +61,7 @@ public class PIDF {
     double specClosed = .83;
     double frontSpec = .17;
     double backSpec = .59;
-    double transferPos = .196;
+    double transferPos = .193;
     double midPos = .45;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
@@ -70,6 +70,7 @@ public class PIDF {
     NormalizedColorSensor colorSensor;
     double sensorReading;
     ElapsedTime transferTimer = new ElapsedTime();
+    ElapsedTime beamTimer = new ElapsedTime();
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -155,7 +156,7 @@ public class PIDF {
                 break;
             case RESET:
                 extend.setPower(-.5);
-                if (touch.getState()) {
+                if (!touch.getState()) {
                     extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     extend.setPower(0);
@@ -234,7 +235,13 @@ public class PIDF {
                 }
                 break;
             case EJECT:
-                collection.setPower(-.6);
+                if (theOpMode.gamepad1.ps) {
+                    collection.setPower(-.6);
+                }
+                else {
+                    collection.setPower(0);
+                    extendState = ExtendState.START;
+                }
                 break;
             default:
                 extendState = ExtendState.START;
@@ -321,11 +328,20 @@ public class PIDF {
                     deliveryS.setPosition(midPos);
                     collection.setPower(.9);
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
+
                         collection.setPower(.9);
+                        beamTimer.reset();
                         extendState = ExtendState.EXTENDED;
                     }
                     break;
                 case EXTENDED:
+                    if (beamTimer.seconds() > 1) {
+                        target = shortPos;
+                        if (beamTimer.seconds() > 1.5) {
+                            target = extended;
+                            beamTimer.reset();
+                        }
+                    }
                     // If we collect a specimen, retract extension, rotate to transfer position, stop collection
                     if (!cBeam.getState()) {
                         target = retracted;
@@ -335,6 +351,10 @@ public class PIDF {
                         //target = retracted;
                         collection.setPower(0);
                         extendState = ExtendState.RETRACT;
+
+
+
+
 
                     }
                     break;
@@ -350,7 +370,7 @@ public class PIDF {
                         if (!dBeam.getState()) {
                             rCollection.setPosition(xHeight);
                             lCollection.setPosition(xHeight);
-                            collection.setPower(0);
+                            collection.setPower(-.6);
                             transferTimer.reset();
                             claw.setPosition(closed);
                             extendState = ExtendState.TRANSFER;
@@ -441,7 +461,7 @@ public class PIDF {
                     rCollection.setPosition(xHeight);
                     lCollection.setPosition(xHeight);
                 case EXTEND:
-                    target = -20;
+                    target = -15;
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
                         extend.setPower(0);
                         extendState = ExtendState.START;

@@ -38,10 +38,12 @@ public class LeftAuto extends LinearOpMode {
         Action afterSub = drive.actionBuilder(initialPose).build();
 
 
-
+                Action score2 = drive.actionBuilder(new Pose2d(12, 25, Math.toRadians(0))).
+                turn(Math.toRadians(20)).
+                build();
         waitForStart();
 
-        Actions.runBlocking( new SequentialAction(afterSub));
+        Actions.runBlocking( new ParallelAction(score2, pidf.collectRun()));
               //  new ParallelAction(afterSub, lift.liftAction()));
     }
 }
