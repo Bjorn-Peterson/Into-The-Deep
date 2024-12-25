@@ -326,10 +326,10 @@ public class PIDF {
                 case EXTEND:
                     target = 655;
                     deliveryS.setPosition(midPos);
-                    collection.setPower(.9);
+                    collection.setPower(.95);
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
 
-                        collection.setPower(.9);
+                        collection.setPower(.95);
                         beamTimer.reset();
                         extendState = ExtendState.EXTENDED;
                     }
@@ -337,7 +337,7 @@ public class PIDF {
                 case EXTENDED:
                     if (beamTimer.seconds() > 1) {
                         target = shortPos;
-                        if (beamTimer.seconds() > 1.5) {
+                        if (beamTimer.seconds() > 1.22) {
                             target = extended;
                             beamTimer.reset();
                         }
@@ -365,12 +365,12 @@ public class PIDF {
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
                         if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
-                            collection.setPower(.7);
+                            collection.setPower(.73);
                         }
                         if (!dBeam.getState()) {
                             rCollection.setPosition(xHeight);
                             lCollection.setPosition(xHeight);
-                            collection.setPower(-.6);
+                            collection.setPower(-.8);
                             transferTimer.reset();
                             claw.setPosition(closed);
                             extendState = ExtendState.TRANSFER;

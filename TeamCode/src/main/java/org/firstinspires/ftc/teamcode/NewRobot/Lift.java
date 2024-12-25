@@ -77,14 +77,14 @@ public class Lift {
 
         switch (teleState) {
             case START:
-            if (theOpMode.gamepad1.dpad_left && !dBeam.getState()) {
-                teleState = TeleState.SPECIMEN;
-            }
-            if (theOpMode.gamepad1.right_trigger > 0.1 || theOpMode.gamepad1.left_trigger > 0.1) {
-                teleState = TeleState.MANUAL;
-            }
+                if (theOpMode.gamepad1.dpad_left) {
+                    teleState = TeleState.SPECIMEN;
+                }
+                if (theOpMode.gamepad1.right_trigger > 0.1 || theOpMode.gamepad1.left_trigger > 0.1) {
+                    teleState = TeleState.MANUAL;
+                }
 
-            break;
+                break;
             case SPECIMEN:
                 target = 800;
                 controller.setPID(p, i, d);
@@ -104,16 +104,15 @@ public class Lift {
                 } else if (theOpMode.gamepad1.left_trigger > 0.1) {
                     lift.setPower(-theOpMode.gamepad1.left_trigger);
 
-                }
-                else if (theOpMode.gamepad1.dpad_left) {
+                } else if (theOpMode.gamepad1.dpad_left) {
                     teleState = TeleState.SPECIMEN;
-                }
-                else {
+                } else {
                     lift.setPower(0);
                 }
                 break;
-            default: teleState = TeleState.START;
-            }
+            default:
+                teleState = TeleState.START;
+        }
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
         theOpMode.telemetry.addData("Current State", teleState);
@@ -237,12 +236,85 @@ public class Lift {
             theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
             theOpMode.telemetry.update();
             return true;
-            }
         }
-        public Action specDeliver() {
-        return new SpecDeliver();
-        }
-
     }
+
+    public Action specDeliver() {
+        return new SpecDeliver();
+    }
+
+    public class LiftUp implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (liftState) {
+                case START:
+                    claw.setPosition(closed);
+                    liftState = LiftState.LIFT;
+                    break;
+                case LIFT:
+                    target = 1345;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 200) {
+                        deliveryS.setPosition(backSpec);
+                        claw.setPosition(open);
+                        liftTimer.reset();
+                        liftState = LiftState.LIFTED;
+                    }
+                    break;
+                case LIFTED:
+                    if (liftTimer.seconds() >= .3) {
+                        deliveryS.setPosition(midPos);
+
+                        if (liftTimer.seconds() >= .42) {
+                            return false;
+                        }
+                    }
+                    break;
+                default:
+                    liftState = LiftState.START;
+
+            }
+            controller.setPID(p, i, d);
+            int curPos = lift.getCurrentPosition();
+            double pid = controller.calculate(curPos, target);
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double power = pid + ff;
+            lift.setPower(power);
+            return true;
+        }
+    }
+
+    public Action liftUp() {
+        return new LiftUp();
+    }
+
+    public class LiftDown implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (liftState) {
+                case START:
+                    liftState = LiftState.DOWN;
+                    break;
+                case DOWN:
+                    target = -20;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                        liftState = LiftState.START;
+                        return false;
+                    }
+
+            }
+            controller.setPID(p, i, d);
+            int curPos = lift.getCurrentPosition();
+            double pid = controller.calculate(curPos, target);
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double power = pid + ff;
+            lift.setPower(power);
+            return true;
+        }
+    }
+    public Action liftDown() {
+        return new LiftDown();
+    }
+}
+
 
 

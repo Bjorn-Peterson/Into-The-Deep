@@ -35,15 +35,13 @@ public class LeftAuto extends LinearOpMode {
                 strafeTo(new Vector2d(40, 0)).
                 build();
 
-        Action afterSub = drive.actionBuilder(initialPose).build();
-
-
-                Action score2 = drive.actionBuilder(new Pose2d(12, 25, Math.toRadians(0))).
-                turn(Math.toRadians(20)).
+                Action score2 = drive.actionBuilder(new Pose2d(12, 25, Math.toRadians(-27))).
+                turn(Math.toRadians(27)).
                 build();
+
         waitForStart();
 
-        Actions.runBlocking( new ParallelAction(score2, pidf.collectRun()));
+        Actions.runBlocking( new ParallelAction(score2, pidf.collectRun(), lift.liftDown()));
               //  new ParallelAction(afterSub, lift.liftAction()));
     }
 }
