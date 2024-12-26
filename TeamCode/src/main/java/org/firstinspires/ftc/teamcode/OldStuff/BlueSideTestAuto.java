@@ -64,6 +64,9 @@ public class BlueSideTestAuto extends LinearOpMode {
         Action score7 = drive.actionBuilder(new Pose2d(5,-20,-45)).
                 strafeToConstantHeading(new Vector2d(8, 19)).
                 build();
+        Action heading = drive.actionBuilder(new Pose2d(20, 19, -45)).
+                turn(Math.toRadians(45)).
+                build();
 
         Actions.runBlocking(pidf.initPositions());
 
@@ -86,6 +89,7 @@ public class BlueSideTestAuto extends LinearOpMode {
                         pidf.collectRun(),
                         new ParallelAction(jk, lift.liftUp(), pidf.retractCollection()),
                         new ParallelAction(num7, pidf.collectRun(), lift.liftDown()),
-                        new ParallelAction(score7, pidf.retractCollection(), lift.liftAction())));
+                        new ParallelAction(score7, pidf.retractCollection(), lift.liftUp()),
+                        new ParallelAction(heading, lift.liftDown(), pidf.retractCollection())));
     }
 }

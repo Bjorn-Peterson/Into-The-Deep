@@ -34,13 +34,13 @@ public class Lift {
     TeleState teleState = TeleState.START;
     LiftState liftState = LiftState.START;
     private PIDController controller;
-    public static double p = 0.033, i = 0, d = 0.001;
-    public static double f = 0.03;
+    public static double p = 0.035, i = 0, d = 0.001;
+    public static double f = 0.031;
     public static int target;
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
     double closed = .87;
     double open = .754;
-    double frontSpec = .14;
+    double frontSpec = .115;
     double backSpec = .6;
     double transferPos = .18;
     double midPos = .45;
@@ -55,7 +55,8 @@ public class Lift {
     private OpMode theOpMode;
     double countsPerInch;
     DigitalChannel dBeam;
-    PIDF pidf;
+
+    double lowerMid = .35;
 
 
     public Lift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
@@ -200,7 +201,7 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 930;
+                    target = 1000;
                     if (Math.abs(lift.getCurrentPosition() - target) < 30) {
                         deliveryS.setPosition(frontSpec);
                         liftTimer.reset();
@@ -208,7 +209,7 @@ public class Lift {
                     }
                     break;
                 case LIFTED:
-                    if (liftTimer.seconds() >= .8) {
+                    if (liftTimer.seconds() >= .3) {
                         claw.setPosition(open);
                         deliveryS.setPosition(midPos);
                         liftState = LiftState.DOWN;
@@ -217,6 +218,7 @@ public class Lift {
                 case DOWN:
                     target = -20;
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                        lift.setPower(-.1);
                         liftState = LiftState.START;
                         return false;
                     }
@@ -327,10 +329,12 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 900;
+                    target = 850;
                     deliveryS.setPosition(frontSpec);
-                    if (Math.abs(lift.getCurrentPosition() - target) < 30) {
-
+                    if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                            lift.setPower(0);
+                            claw.setPosition(closed);
+                            liftState = LiftState.START;
                             return false;
                         }
                     break;
@@ -356,13 +360,13 @@ public class Lift {
                     switch (liftState) {
                         case START:
                             liftState = LiftState.DOWN;
+                            deliveryTimer.reset();
                             break;
                         case DOWN:
                             target = -30;
                             deliveryS.setPosition(backSpec);
-                            claw.setPosition(open);
-                            if (Math.abs(lift.getCurrentPosition() - target) < 15) {
-                                lift.setPower(-0.1);
+                            if (deliveryTimer.seconds() >= .33) {
+                                claw.setPosition(open);
                                 liftState = LiftState.START;
                                 return false;
                             }
@@ -371,12 +375,6 @@ public class Lift {
                         default:
                             liftState = LiftState.START;
                     }
-                    controller.setPID(p, i, d);
-                    int curPos = lift.getCurrentPosition();
-                    double pid = controller.calculate(curPos, target);
-                    double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
-                    double power = pid + ff;
-                    lift.setPower(power);
                     return true;
                 }
         }
