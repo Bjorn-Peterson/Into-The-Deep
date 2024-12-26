@@ -30,8 +30,8 @@ public class BlueSideTestAuto extends LinearOpMode {
         Action toDeliver = drive.actionBuilder(initialPose).
                 splineToLinearHeading(new Pose2d(12,25,Math.toRadians(-27)), Math.toRadians(0)).
                 build();
-        Action score2 = drive.actionBuilder(new Pose2d(12, 25, Math.toRadians(-27))).
-                    turn(Math.toRadians(27)).
+        Action score2 = drive.actionBuilder(new Pose2d(12, 23, Math.toRadians(-27))).
+                    turn(Math.toRadians(25)).
                     build();
         Action score3 = drive.actionBuilder(initialPose).
                 turnTo(30, new TurnConstraints(30, -30, 30)).build();
@@ -42,11 +42,10 @@ public class BlueSideTestAuto extends LinearOpMode {
                 splineToLinearHeading(new Pose2d(8, 20, Math.toRadians(-37)), Math.toRadians(0)).
                 build();
         Action sub = drive.actionBuilder(initialPose).
-                splineTo(new Vector2d(50, -10), Math.toRadians(-90)).
+                splineTo(new Vector2d(50, -12), Math.toRadians(-90)).
                 build();
-        Action afterSub = drive.actionBuilder(new Pose2d(50,-10,-45)).
-                setTangent(45).
-                strafeToConstantHeading(new Vector2d(8, 24)).
+        Action afterSub = drive.actionBuilder(new Pose2d(50,-12,-45)).
+                strafeToConstantHeading(new Vector2d(5, 17)).
                 build();
         Action collect6 = drive.actionBuilder(initialPose).
                 setReversed(false).
@@ -56,9 +55,14 @@ public class BlueSideTestAuto extends LinearOpMode {
                 setReversed(false).
                 turnTo(Math.toRadians(90), new TurnConstraints(30, -30, 30))
                 .build();
-        Action jk = drive.actionBuilder(new Pose2d(50,-10,-45)).
-                setTangent(Math.toRadians(45)).
-                strafeToConstantHeading(new Vector2d(8, 24)).
+        Action jk = drive.actionBuilder(new Pose2d(50,-13,-45)).
+                strafeToConstantHeading(new Vector2d(5, 17)).
+                build();
+        Action num7 = drive.actionBuilder(new Pose2d(5, 17, -45)).
+                strafeToLinearHeading(new Vector2d(2, -13), -90).
+                build();
+        Action score7 = drive.actionBuilder(new Pose2d(5,-20,-45)).
+                strafeToConstantHeading(new Vector2d(8, 19)).
                 build();
 
         Actions.runBlocking(pidf.initPositions());
@@ -67,19 +71,21 @@ public class BlueSideTestAuto extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        new ParallelAction(toDeliver, lift.liftAction(), pidf.extendCollection()),
+                        new ParallelAction(toDeliver, lift.liftUp(), pidf.extendCollection()),
+                        new ParallelAction(lift.liftDown(), pidf.collectRun()),
+                        lift.liftUp(),
+                        new ParallelAction(score2, lift.liftDown(), pidf.extendCollection()),
                         pidf.collectRun(),
-                        new ParallelAction(score2,lift.liftAction()),
+                        new ParallelAction(score3, lift.liftUp()),
+                        new ParallelAction(collect3, pidf.collectRun(),lift.liftDown()),
+                        new ParallelAction(score4, lift.liftUp()),
+                        new ParallelAction(sub, pidf.retractCollection(), lift.liftDown()),
                         pidf.collectRun(),
-                        new ParallelAction(score3, lift.liftAction()),
-                        new ParallelAction(collect3, pidf.collectRun()),
-                        new ParallelAction(score4, lift.liftAction()),
-                        new ParallelAction(sub, pidf.retractCollection()),
+                        new ParallelAction(afterSub, pidf.retractCollection(), lift.liftUp()),
+                        new ParallelAction(collect6, pidf.retractCollection(), lift.liftDown()),
                         pidf.collectRun(),
-                        new ParallelAction(afterSub, pidf.retractCollection(), lift.liftAction()),
-                        new ParallelAction(collect6, pidf.retractCollection()),
-                        pidf.collectRun(),
-                        new ParallelAction(end, pidf.retractCollection())
-                        ,new ParallelAction(jk, lift.liftAction())));
+                        new ParallelAction(jk, lift.liftUp(), pidf.retractCollection()),
+                        new ParallelAction(num7, pidf.collectRun(), lift.liftDown()),
+                        new ParallelAction(score7, pidf.retractCollection(), lift.liftAction())));
     }
 }

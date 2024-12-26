@@ -163,7 +163,7 @@ public class Lift {
                 case DOWN:
                     target = -30;
                     if (Math.abs(lift.getCurrentPosition() - target) < 15) {
-                        lift.setPower(-0.15);
+                        lift.setPower(-0.1);
                         liftState = LiftState.START;
                         return false;
 
@@ -295,12 +295,16 @@ public class Lift {
                     liftState = LiftState.DOWN;
                     break;
                 case DOWN:
-                    target = -20;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                    target = -30;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 15) {
+                        lift.setPower(-0.1);
                         liftState = LiftState.START;
                         return false;
                     }
+                    break;
 
+                    default:
+                        liftState = LiftState.START;
             }
             controller.setPID(p, i, d);
             int curPos = lift.getCurrentPosition();

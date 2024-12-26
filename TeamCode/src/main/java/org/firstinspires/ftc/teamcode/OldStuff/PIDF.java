@@ -326,18 +326,22 @@ public class PIDF {
                 case EXTEND:
                     target = 655;
                     deliveryS.setPosition(midPos);
-                    collection.setPower(.95);
-                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
+                    collection.setPower(.9);
+                    if (Math.abs(extend.getCurrentPosition() - target) < 30) {
 
-                        collection.setPower(.95);
+                        collection.setPower(.9);
                         beamTimer.reset();
                         extendState = ExtendState.EXTENDED;
                     }
                     break;
                 case EXTENDED:
-                    if (beamTimer.seconds() > 1) {
+                    if (beamTimer.seconds() > 0.7) {
                         target = shortPos;
-                        if (beamTimer.seconds() > 1.22) {
+                        lCollection.setPosition(transfer);
+                        rCollection.setPosition(transfer);
+                        if (beamTimer.seconds() > .93) {
+                            lCollection.setPosition(collect);
+                            rCollection.setPosition(collect);
                             target = extended;
                             beamTimer.reset();
                         }
@@ -370,7 +374,7 @@ public class PIDF {
                         if (!dBeam.getState()) {
                             rCollection.setPosition(xHeight);
                             lCollection.setPosition(xHeight);
-                            collection.setPower(-.8);
+                            collection.setPower(-.9);
                             transferTimer.reset();
                             claw.setPosition(closed);
                             extendState = ExtendState.TRANSFER;
@@ -432,8 +436,8 @@ public class PIDF {
             switch (extendState) {
                 case START:
                     extendState = ExtendState.EXTEND;
-                    rCollection.setPosition(xHeight);
-                    lCollection.setPosition(xHeight);
+                    rCollection.setPosition(transfer);
+                    lCollection.setPosition(transfer);
                 case EXTEND:
                     target = 300;
                     if (Math.abs(extend.getCurrentPosition() - target) < 20) {
