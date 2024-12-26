@@ -200,8 +200,8 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 900;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 100) {
+                    target = 930;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 30) {
                         deliveryS.setPosition(frontSpec);
                         liftTimer.reset();
                         liftState = LiftState.LIFTED;
@@ -318,6 +318,72 @@ public class Lift {
     public Action liftDown() {
         return new LiftDown();
     }
+    public class LiftMid implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (liftState) {
+                case START:
+                    claw.setPosition(specClosed);
+                    liftState = LiftState.LIFT;
+                    break;
+                case LIFT:
+                    target = 900;
+                    deliveryS.setPosition(frontSpec);
+                    if (Math.abs(lift.getCurrentPosition() - target) < 30) {
+
+                            return false;
+                        }
+                    break;
+                default:
+                    liftState = LiftState.START;
+
+            }
+            controller.setPID(p, i, d);
+            int curPos = lift.getCurrentPosition();
+            double pid = controller.calculate(curPos, target);
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double power = pid + ff;
+            lift.setPower(power);
+            return true;
+        }
+    }
+    public Action liftMid() {
+        return new LiftMid();
+    }
+    public class Pickup implements Action {
+        @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                    switch (liftState) {
+                        case START:
+                            liftState = LiftState.DOWN;
+                            break;
+                        case DOWN:
+                            target = -30;
+                            deliveryS.setPosition(backSpec);
+                            claw.setPosition(open);
+                            if (Math.abs(lift.getCurrentPosition() - target) < 15) {
+                                lift.setPower(-0.1);
+                                liftState = LiftState.START;
+                                return false;
+                            }
+                            break;
+
+                        default:
+                            liftState = LiftState.START;
+                    }
+                    controller.setPID(p, i, d);
+                    int curPos = lift.getCurrentPosition();
+                    double pid = controller.calculate(curPos, target);
+                    double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+                    double power = pid + ff;
+                    lift.setPower(power);
+                    return true;
+                }
+        }
+        public Action pickup() {
+        return new Pickup();
+        }
+
 }
 
 

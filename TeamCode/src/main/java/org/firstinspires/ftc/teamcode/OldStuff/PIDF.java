@@ -63,6 +63,7 @@ public class PIDF {
     double backSpec = .59;
     double transferPos = .193;
     double midPos = .45;
+    double lowerMid = .25;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
@@ -325,7 +326,7 @@ public class PIDF {
                 // Rotate to collecting position
                 case EXTEND:
                     target = 655;
-                    deliveryS.setPosition(midPos);
+                    deliveryS.setPosition(lowerMid);
                     collection.setPower(.9);
                     if (Math.abs(extend.getCurrentPosition() - target) < 30) {
 
@@ -344,6 +345,9 @@ public class PIDF {
                             rCollection.setPosition(collect);
                             target = extended;
                             beamTimer.reset();
+                        }
+                        if (beamTimer.seconds() >= 4) {
+                            return false;
                         }
                     }
                     // If we collect a specimen, retract extension, rotate to transfer position, stop collection
@@ -369,7 +373,11 @@ public class PIDF {
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
                         if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
+                            beamTimer.reset();
                             collection.setPower(.73);
+                        }
+                        if (beamTimer.seconds() >= 1.5) {
+                            extendState = ExtendState.EXTEND;
                         }
                         if (!dBeam.getState()) {
                             rCollection.setPosition(xHeight);
