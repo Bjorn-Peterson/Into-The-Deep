@@ -30,7 +30,7 @@ public class Specimen extends LinearOpMode {
                 strafeTo(new Vector2d(32.3, 0)).
                 build();
         Action toCollect = drive.actionBuilder(new Pose2d(32.3, 0, 0)).
-                waitSeconds(.6).
+                waitSeconds(2).
                 strafeTo(new Vector2d(12.5, -47)).
                 build();
         Action collect1 = drive.actionBuilder(new Pose2d(11, -47, 0)).
@@ -43,12 +43,14 @@ public class Specimen extends LinearOpMode {
                 build();
         Action toDeliver = drive.actionBuilder(new Pose2d(13, -45, 0)).
                 waitSeconds(.4).
+                strafeTo(new Vector2d(4, -30)).
                 strafeTo(new Vector2d(1, -30)).
                 build();
         Action deliver1 = drive.actionBuilder(new Pose2d(1, -30, 0)).
                 strafeTo(new Vector2d(31.5, 8)).
                 build();
         Action toDeliver2 = drive.actionBuilder(new Pose2d(31.5, 8, 0)).
+                strafeTo(new Vector2d(4, -30)).
                 strafeTo(new Vector2d(1, -30)).
                 build();
 

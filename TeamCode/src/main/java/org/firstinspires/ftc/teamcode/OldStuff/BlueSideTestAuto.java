@@ -38,8 +38,8 @@ public class BlueSideTestAuto extends LinearOpMode {
         Action collect3 = drive.actionBuilder(initialPose).
                 strafeToLinearHeading(new Vector2d(10, 19), Math.toRadians(36)).
                 build();
-        Action score4 = drive.actionBuilder(initialPose).
-                splineToLinearHeading(new Pose2d(8, 20, Math.toRadians(-37)), Math.toRadians(0)).
+        Action score4 = drive.actionBuilder(new Pose2d(10, 19, -37)).
+                strafeTo(new Vector2d(8, 20)).
                 build();
         Action sub = drive.actionBuilder(initialPose).
                 splineTo(new Vector2d(50, -12), Math.toRadians(-90)).
@@ -49,12 +49,8 @@ public class BlueSideTestAuto extends LinearOpMode {
                 build();
         Action collect6 = drive.actionBuilder(initialPose).
                 setReversed(false).
-                splineTo(new Vector2d(52, -13), Math.toRadians(-90)).
+                splineTo(new Vector2d(52, -15), Math.toRadians(-90)).
                 build();
-        Action end = drive.actionBuilder(initialPose).
-                setReversed(false).
-                turnTo(Math.toRadians(90), new TurnConstraints(30, -30, 30))
-                .build();
         Action jk = drive.actionBuilder(new Pose2d(50,-13,-45)).
                 strafeToConstantHeading(new Vector2d(5, 17)).
                 build();

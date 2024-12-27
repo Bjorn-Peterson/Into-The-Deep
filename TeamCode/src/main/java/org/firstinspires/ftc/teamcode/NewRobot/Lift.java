@@ -197,7 +197,7 @@ public class Lift {
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (liftState) {
                 case START:
-                    claw.setPosition(specClosed);
+                    claw.setPosition(closed);
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
