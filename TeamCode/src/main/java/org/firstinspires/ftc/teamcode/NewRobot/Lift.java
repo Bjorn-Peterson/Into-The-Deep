@@ -279,6 +279,7 @@ public class Lift {
             switch (liftState) {
                 case START:
                     claw.setPosition(closed);
+                    deliveryS.setPosition(midPos);
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
@@ -287,18 +288,11 @@ public class Lift {
                         deliveryS.setPosition(backSpec);
                         claw.setPosition(open);
                         liftTimer.reset();
-                        liftState = LiftState.LIFTED;
+                        liftState = LiftState.START;
+                        return false;
                     }
                     break;
-                case LIFTED:
-                    if (liftTimer.seconds() >= .3) {
-                        deliveryS.setPosition(midPos);
 
-                        if (liftTimer.seconds() >= .42) {
-                            return false;
-                        }
-                    }
-                    break;
                 default:
                     liftState = LiftState.START;
 
@@ -322,6 +316,7 @@ public class Lift {
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (liftState) {
                 case START:
+                    deliveryS.setPosition(midPos);
                     liftState = LiftState.DOWN;
                     break;
                 case DOWN:
@@ -393,7 +388,7 @@ public class Lift {
                         case DOWN:
                             target = -30;
                             deliveryS.setPosition(backSpec);
-                            if (deliveryTimer.seconds() >= .33) {
+                            if (deliveryTimer.seconds() >= .2) {
                                 claw.setPosition(open);
                                 liftState = LiftState.START;
                                 return false;
@@ -409,7 +404,58 @@ public class Lift {
         public Action pickup() {
         return new Pickup();
         }
+    public class Spec implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (liftState) {
+                case START:
+                    claw.setPosition(closed);
+                    liftState = LiftState.LIFT;
+                    break;
+                case LIFT:
+                    target = 1000;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 30) {
+                        deliveryS.setPosition(frontSpec);
+                        liftTimer.reset();
+                        liftState = LiftState.LIFTED;
+                    }
+                    break;
+                case LIFTED:
+                    if (liftTimer.seconds() >= .3) {
+                        claw.setPosition(open);
+                        deliveryS.setPosition(midPos);
+                        liftState = LiftState.DOWN;
+                    }
+                    break;
+                case DOWN:
+                    target = -20;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                        lift.setPower(-.1);
+                        liftState = LiftState.START;
+                        return false;
+                    }
+                    break;
+                default:
+                    liftState = LiftState.START;
 
+            }
+            controller.setPID(p, i, d);
+            int curPos = lift.getCurrentPosition();
+            double pid = controller.calculate(curPos, target);
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double power = pid + ff;
+            lift.setPower(power);
+            theOpMode.telemetry.addData("LiftState", liftState);
+            theOpMode.telemetry.addData("target", target);
+            theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
+            theOpMode.telemetry.update();
+            return true;
+        }
+    }
+
+    public Action spec() {
+        return new Spec();
+    }
 }
 
 

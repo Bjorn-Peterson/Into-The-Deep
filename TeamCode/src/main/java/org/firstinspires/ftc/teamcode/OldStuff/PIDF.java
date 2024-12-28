@@ -121,7 +121,7 @@ public class PIDF {
             deliveryS.setPosition(transferPos);
         }
 
-        if (theOpMode.gamepad1.ps) {
+        if (theOpMode.gamepad1.b) {
             extendState = ExtendState.EJECT;
         }
         if (theOpMode.gamepad2.ps) {
@@ -218,6 +218,7 @@ public class PIDF {
                     }
                 }
                 if (!dBeam.getState()) {
+                    collection.setPower(-.9);
                     transferTimer.reset();
                     claw.setPosition(closed);
                     extendState = ExtendState.TRANSFER;
@@ -231,7 +232,7 @@ public class PIDF {
                 target = shortPos;
                 //collection.setPower(-.8);
                 if (transferTimer.seconds() >= .18) {
-                    //collection.setPower(0);
+                    collection.setPower(0);
                     target = retracted;
                     extendState = ExtendState.START;
                     claw.setPosition(closed);
@@ -353,6 +354,12 @@ public class PIDF {
                             beamTimer.reset();
                         }
                         if (failTimer.seconds() >= 3) {
+                            extend.setPower(0);
+                            collection.setPower(0);
+                            target = retracted;
+                            extendState = ExtendState.START;
+                            claw.setPosition(closed);
+                            deliveryS.setPosition(midPos);
                             return false;
                         }
                     }
@@ -377,7 +384,7 @@ public class PIDF {
                 case RETRACT:
                     deliveryS.setPosition(transferPos);
                     claw.setPosition(open);
-                    if (beamTimer.seconds() >= 2.3) {
+                    if (beamTimer.seconds() >= 1.5 && cBeam.getState()) {
                         extendState = ExtendState.EXTEND;
                     }
                     if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {

@@ -65,7 +65,7 @@ public class Drivetrain {
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         AbsoluteValue = -imuCH.getAngularOrientation().firstAngle;
-        if (theOpMode.gamepad1.b) {
+        if (theOpMode.gamepad1.ps) {
             ZeroPosition = AbsoluteValue;
 
         }

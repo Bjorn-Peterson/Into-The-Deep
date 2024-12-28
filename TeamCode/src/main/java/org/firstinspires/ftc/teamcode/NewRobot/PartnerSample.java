@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.OldStuff;
+package org.firstinspires.ftc.teamcode.NewRobot;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
@@ -11,11 +11,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.NewRobot.Lift;
+import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 
 @Config
-@Autonomous(name = "Sample", group = "Autonomous")
-public class BlueSideTestAuto extends LinearOpMode {
+@Autonomous(name = "PartnerSample", group = "Autonomous")
+public class PartnerSample extends LinearOpMode {
 
 
     @Override
@@ -31,8 +32,8 @@ public class BlueSideTestAuto extends LinearOpMode {
                 splineToLinearHeading(new Pose2d(12,25,Math.toRadians(-27)), Math.toRadians(0)).
                 build();
         Action score2 = drive.actionBuilder(new Pose2d(11, 23, Math.toRadians(-27))).
-                    turn(Math.toRadians(25)).
-                    build();
+                turn(Math.toRadians(25)).
+                build();
         Action score3 = drive.actionBuilder(initialPose).
                 turnTo(30, new TurnConstraints(30, -30, 30)).build();
         Action collect3 = drive.actionBuilder(initialPose).
@@ -76,7 +77,7 @@ public class BlueSideTestAuto extends LinearOpMode {
 
         Actions.runBlocking(pidf.initPositions());
 
-            waitForStart();
+        waitForStart();
 
         Actions.runBlocking(
                 new SequentialAction(
@@ -94,11 +95,12 @@ public class BlueSideTestAuto extends LinearOpMode {
                         new ParallelAction(collect6, pidf.retractCollection(), lift.liftDown()),
                         pidf.collectRun(),
                         new ParallelAction(jk, pidf.retractCollection()),
+                        new ParallelAction(num7, pidf.collectRun(), lift.liftDown()),
+                        new ParallelAction(score7, pidf.retractCollection(), lift.liftUp()),
                         new ParallelAction(collect8, lift.liftDown(), pidf.retractCollection()),
                         pidf.collectRun(),
-                        new ParallelAction(score8, pidf.retractCollection()),
-                        new ParallelAction(num7, pidf.collectRun(), lift.liftDown()),
-                        new ParallelAction(score7, pidf.retractCollection(), lift.liftUp())
-                        ));
+                        new ParallelAction(score8, pidf.retractCollection())
+
+                ));
     }
 }
