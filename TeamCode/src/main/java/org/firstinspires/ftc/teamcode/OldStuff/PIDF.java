@@ -331,6 +331,8 @@ public class PIDF {
                     target = 655;
                     deliveryS.setPosition(lowerMid);
                     collection.setPower(.9);
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
                     if (Math.abs(extend.getCurrentPosition() - target) < 100) {
 
                         collection.setPower(.9);
@@ -364,6 +366,7 @@ public class PIDF {
                         //target = retracted;
                         collection.setPower(0);
                         extendState = ExtendState.RETRACT;
+                        beamTimer.reset();
 
 
 
@@ -374,16 +377,18 @@ public class PIDF {
                 case RETRACT:
                     deliveryS.setPosition(transferPos);
                     claw.setPosition(open);
+                    if (beamTimer.seconds() >= 2.3) {
+                        extendState = ExtendState.EXTEND;
+                    }
                     if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
                         if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
-                            beamTimer.reset();
                             collection.setPower(.73);
+
                         }
-                        if (beamTimer.seconds() >= 3) {
-                            extendState = ExtendState.EXTEND;
-                        }
+
+
                         if (!dBeam.getState()) {
                             rCollection.setPosition(xHeight);
                             lCollection.setPosition(xHeight);
@@ -418,6 +423,7 @@ public class PIDF {
             double power = controller.calculate(curPos, target);
             extend.setPower(power);
             theOpMode.telemetry.addData("Current State", extendState);
+            theOpMode.telemetry.addData("Beam timer", beamTimer);
             if (!dBeam.getState()) {
                 theOpMode.telemetry.addData("Beam", "Broken");
             }

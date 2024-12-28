@@ -40,7 +40,7 @@ public class Lift {
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
     double closed = .87;
     double open = .754;
-    double frontSpec = .115;
+    double frontSpec = .122;
     double backSpec = .6;
     double transferPos = .18;
     double midPos = .45;
@@ -50,6 +50,7 @@ public class Lift {
     private DcMotorEx lift;
     public Servo claw;
     public Servo deliveryS;
+    public DigitalChannel liftTouch;
     private ElapsedTime liftTimer = new ElapsedTime();
     private ElapsedTime deliveryTimer = new ElapsedTime();
     private OpMode theOpMode;
@@ -72,6 +73,8 @@ public class Lift {
         deliveryS = hardwareMap.get(Servo.class, "delivery");
         dBeam = hardwareMap.get(DigitalChannel.class, "dBeam");
         dBeam.setMode(DigitalChannel.Mode.INPUT);
+        liftTouch = hardwareMap.get(DigitalChannel.class, "lTouch");
+        liftTouch.setMode(DigitalChannel.Mode.INPUT);
     }
 
     public void teleLift() {
@@ -123,16 +126,41 @@ public class Lift {
     }
 
     public void soloControls() {
+        switch (teleState) {
+            case START:
+                if (theOpMode.gamepad1.right_trigger > 0.1 || theOpMode.gamepad1.left_trigger > 0.1) {
+                    teleState = TeleState.MANUAL;
+                }
+                if (!liftTouch.getState()) {
+                    teleState = TeleState.LOW;
+                }
+                break;
+            case MANUAL:
 
-        if (theOpMode.gamepad1.right_trigger > .05) {
-            lift.setPower(theOpMode.gamepad1.right_trigger);
+            if (theOpMode.gamepad1.right_trigger > .1) {
+                lift.setPower(theOpMode.gamepad1.right_trigger);
 
-        } else if (theOpMode.gamepad1.left_trigger > .05) {
-            lift.setPower(-theOpMode.gamepad1.left_trigger);
+            }
+            else if (theOpMode.gamepad1.left_trigger > .1) {
+                lift.setPower(-theOpMode.gamepad1.left_trigger);
 
-        } else {
-            lift.setPower(0);
+            } else {
+                lift.setPower(0);
+            }
+                if (!liftTouch.getState()) {
+                    teleState = TeleState.LOW;
+                }
+                break;
+            case LOW:
+                lift.setPower(0);
+                if (theOpMode.gamepad1.right_trigger > .1) {
+                    lift.setPower(theOpMode.gamepad1.right_trigger);
+                    teleState = TeleState.MANUAL;
+                }
+                break;
+            default: teleState = TeleState.START;
         }
+
     }
 
     public class LiftAction implements Action {
@@ -329,7 +357,7 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 850;
+                    target = 860;
                     deliveryS.setPosition(frontSpec);
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
                             lift.setPower(0);

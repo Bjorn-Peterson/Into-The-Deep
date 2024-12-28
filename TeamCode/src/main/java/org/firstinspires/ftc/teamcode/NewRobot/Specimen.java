@@ -27,32 +27,57 @@ public class Specimen extends LinearOpMode {
 
 
         Action preload = drive.actionBuilder(initialPose).
-                strafeTo(new Vector2d(32.3, 0)).
+                strafeTo(new Vector2d(33, 0)).
                 build();
-        Action toCollect = drive.actionBuilder(new Pose2d(32.3, 0, 0)).
-                waitSeconds(2).
-                strafeTo(new Vector2d(12.5, -47)).
+        Action toCollect = drive.actionBuilder(new Pose2d(20, 0, 0)).
+                waitSeconds(.28).
+                strafeTo(new Vector2d(30, 0)).
+                strafeTo(new Vector2d(13, -47)).
                 build();
         Action collect1 = drive.actionBuilder(new Pose2d(11, -47, 0)).
-                strafeTo(new Vector2d(12.5, -56)).
+                strafeTo(new Vector2d(13, -56)).
                 waitSeconds(.25).
                 build();
-        Action collect2 = drive.actionBuilder(new Pose2d(13, -45, 0)).
+        Action collect2 = drive.actionBuilder(new Pose2d(20, -45, 0)).
                 turn(Math.toRadians(-35)).
                 waitSeconds(.25).
                 build();
-        Action toDeliver = drive.actionBuilder(new Pose2d(13, -45, 0)).
+        Action toDeliver = drive.actionBuilder(new Pose2d(11, -45, 0)).
                 waitSeconds(.4).
-                strafeTo(new Vector2d(4, -30)).
-                strafeTo(new Vector2d(1, -30)).
+                strafeTo(new Vector2d(8, -36)).
+                strafeTo(new Vector2d(1, -36)).
                 build();
-        Action deliver1 = drive.actionBuilder(new Pose2d(1, -30, 0)).
-                strafeTo(new Vector2d(31.5, 8)).
+        Action deliver1 = drive.actionBuilder(new Pose2d(1, -33, 0)).
+                strafeTo(new Vector2d(29, 7)).
+                strafeTo(new Vector2d(33, 7)).
                 build();
-        Action toDeliver2 = drive.actionBuilder(new Pose2d(31.5, 8, 0)).
-                strafeTo(new Vector2d(4, -30)).
-                strafeTo(new Vector2d(1, -30)).
+        Action toDeliver2 = drive.actionBuilder(new Pose2d(32.5, 8, 0)).
+                waitSeconds(.3).
+                strafeTo(new Vector2d(8, -37)).
+                afterDisp(0, lift.pickup()).
+                strafeTo(new Vector2d(1, -37)).
                 build();
+        Action deliver2 = drive.actionBuilder(new Pose2d(1, -30, 0)).
+                strafeTo(new Vector2d(29, 10)).
+                strafeTo(new Vector2d(33, 10)).
+                build();
+        Action toDeliver3 = drive.actionBuilder(new Pose2d(32.5, 10, 0)).
+                waitSeconds(.28).
+                strafeTo(new Vector2d(8, -37)).
+                afterDisp(0, lift.pickup()).
+                strafeTo(new Vector2d(1, -37)).
+                build();
+        Action deliver3 = drive.actionBuilder(new Pose2d(1, -30, 0)).
+                strafeTo(new Vector2d(28, 13)).
+                strafeTo(new Vector2d(33, 13)).
+                build();
+        Action toDeliver4 = drive.actionBuilder(new Pose2d(33, 10, 0)).
+                waitSeconds(.28).
+                strafeTo(new Vector2d(8, -37)).
+                afterDisp(0, lift.pickup()).
+                strafeTo(new Vector2d(1, -37)).
+                build();
+
 
 
         Actions.runBlocking(pidf.initPositions());
@@ -66,11 +91,17 @@ public class Specimen extends LinearOpMode {
                         new ParallelAction(collect1, lift.pickup()),
 
                         pidf.collectRun(),
-                        new ParallelAction(collect2, lift.pickup()),
-                        pidf.collectRun(),
+//                        new ParallelAction(collect2, lift.pickup()),
+//                        pidf.collectRun(),
                         new ParallelAction(toDeliver, lift.pickup()),
                         new ParallelAction(deliver1, lift.liftMid(), pidf.retractCollection()),
-                        new ParallelAction(toDeliver2, lift.specDeliver(), pidf.retractCollection())
+                        new ParallelAction(toDeliver2, lift.specDeliver(), pidf.retractCollection()),
+
+                        new ParallelAction(deliver2, lift.liftMid(), pidf.retractCollection()),
+                        new ParallelAction(toDeliver3, lift.specDeliver(), pidf.retractCollection()),
+                        new ParallelAction(deliver3, lift.liftMid(), pidf.retractCollection()),
+                        new ParallelAction(toDeliver4, lift.specDeliver(), pidf.retractCollection())
+
 
                 ));
     }

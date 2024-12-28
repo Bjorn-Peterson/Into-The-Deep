@@ -1,38 +1,77 @@
 package org.firstinspires.ftc.teamcode.OldStuff;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TurnConstraints;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-
-
-import org.firstinspires.ftc.teamcode.NewRobot.Drivetrain;
+import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.NewRobot.Lift;
 
-//https:www.youtube.com/watch?v=pQ_aVTM9qX0
-@Autonomous
+
+@Config
+@Autonomous(name = "test", group = "Autonomous")
 public class TestAuto extends LinearOpMode {
-  //  Drivetrain drivetrain;
-    Collection3d collection3d;
-    ri3d ri3d;
-   // PDFL pdfl;
-   // PIDF pidf;
-    //Lift lift;
-
-    //PIDFLift pidfLift;
-
 
 
     @Override
     public void runOpMode() {
-        //drivetrain = new Drivetrain(hardwareMap, this, 384.5, 1, 4.09);
-      //  delivery = new Delivery(hardwareMap, this);
-       // pdfl = new PDFL(hardwareMap,this);
-        //pidf = new PIDF(hardwareMap, this);
-        collection3d = new Collection3d(hardwareMap, this);
-        //lift = new Lift(hardwareMap, this, 145.1, 1, 1.15);
-        ri3d = new ri3d(hardwareMap, this, 384.5, 1, 4);
+        Pose2d initialPose = new Pose2d(0, 0, 0);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
+
+        PIDF pidf = new PIDF(hardwareMap, this);
+        Lift lift = new Lift(hardwareMap, this, 145.1, 1, 1.15);
+
+
+        Action toDeliver = drive.actionBuilder(initialPose).
+                splineToLinearHeading(new Pose2d(12,25,Math.toRadians(-27)), Math.toRadians(0)).
+                build();
+        Action score2 = drive.actionBuilder(new Pose2d(11, 23, Math.toRadians(-27))).
+                turn(Math.toRadians(25)).
+                build();
+        Action score3 = drive.actionBuilder(initialPose).
+                turnTo(30, new TurnConstraints(30, -30, 30)).build();
+        Action collect3 = drive.actionBuilder(initialPose).
+                strafeToLinearHeading(new Vector2d(10, 19), Math.toRadians(36)).
+                build();
+        Action score4 = drive.actionBuilder(new Pose2d(10, 19, -45)).
+                strafeTo(new Vector2d(4, 17)).
+                build();
+        Action sub = drive.actionBuilder(initialPose).
+                splineTo(new Vector2d(50, -12), Math.toRadians(-90)).
+                build();
+        Action afterSub = drive.actionBuilder(new Pose2d(50,-12,-45)).
+                afterDisp(20, lift.liftUp()).
+                strafeToConstantHeading(new Vector2d(5, 17)).
+                build();
+        Action collect6 = drive.actionBuilder(initialPose).
+                setReversed(false).
+                splineTo(new Vector2d(52, -15), Math.toRadians(-90)).
+                build();
+        Action jk = drive.actionBuilder(new Pose2d(50,-13,-45)).
+                afterDisp(20, lift.liftUp()).
+                strafeToConstantHeading(new Vector2d(5, 17)).
+                build();
+        Action num7 = drive.actionBuilder(new Pose2d(5, 17, -45)).
+                strafeToLinearHeading(new Vector2d(2, -13), -90).
+                build();
+        Action score7 = drive.actionBuilder(new Pose2d(5,-20,-45)).
+                strafeToConstantHeading(new Vector2d(8, 19)).
+                build();
+        Action heading = drive.actionBuilder(new Pose2d(30, 19, -90)).
+                strafeTo(new Vector2d(10, -100)).
+                build();
+
+        Actions.runBlocking(pidf.initPositions());
 
         waitForStart();
-        collection3d.colState(Collection3d.collectionState.WIDE);
-        sleep(1500);
-    }
 
+        Actions.runBlocking(
+                new SequentialAction(
+                        heading));
+    }
 }
