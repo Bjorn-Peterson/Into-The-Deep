@@ -41,7 +41,7 @@ public class Lift {
     double closed = .87;
     double open = .754;
     double frontSpec = .122;
-    double backSpec = .6;
+    double backSpec = .63;
     double transferPos = .18;
     double midPos = .45;
     double specClosed = .83;
@@ -288,11 +288,19 @@ public class Lift {
                         deliveryS.setPosition(backSpec);
                         claw.setPosition(open);
                         liftTimer.reset();
-                        liftState = LiftState.START;
-                        return false;
+                        liftState = LiftState.LIFTED;
                     }
                     break;
+                case LIFTED:
+                    if (liftTimer.seconds() >= .24) {
+                        deliveryS.setPosition(midPos);
 
+                        if (liftTimer.seconds() >= .28) {
+                            liftState = LiftState.START;
+                            return false;
+                        }
+                    }
+                        break;
                 default:
                     liftState = LiftState.START;
 
@@ -409,12 +417,14 @@ public class Lift {
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (liftState) {
                 case START:
-                    claw.setPosition(closed);
+                    deliveryS.setPosition(frontSpec);
+                    claw.setPosition(specClosed);
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
                     target = 1000;
                     if (Math.abs(lift.getCurrentPosition() - target) < 30) {
+                        claw.setPosition(closed);
                         deliveryS.setPosition(frontSpec);
                         liftTimer.reset();
                         liftState = LiftState.LIFTED;

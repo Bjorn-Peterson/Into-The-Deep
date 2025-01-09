@@ -749,7 +749,6 @@ public class ri3d {
             getBrightness();
         }
 
-
         // Stop all motors
         leftDrive.setPower(0);
         rightDrive.setPower(0);

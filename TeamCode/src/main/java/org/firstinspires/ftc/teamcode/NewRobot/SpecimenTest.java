@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 
 @Config
-@Autonomous(name = "Specimen", group = "Autonomous")
+@Autonomous(name = "SpecimenTest", group = "Autonomous")
 public class SpecimenTest extends LinearOpMode {
 
 
@@ -27,8 +27,9 @@ public class SpecimenTest extends LinearOpMode {
 
 
         Action preload = drive.actionBuilder(initialPose).
-                afterDisp(5, lift.spec()).
-                strafeTo(new Vector2d(33, 0)).
+                afterDisp(6, lift.spec()).
+                strafeTo(new Vector2d(32, 0)).
+                waitSeconds(.2).
                 strafeTo(new Vector2d(28, 0)).
                 strafeTo(new Vector2d(13, -47)).
                 build();

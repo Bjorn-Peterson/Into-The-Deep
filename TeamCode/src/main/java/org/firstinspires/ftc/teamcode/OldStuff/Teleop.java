@@ -19,7 +19,7 @@ public class Teleop extends OpMode {
     @Override
     public void loop() {
 
-        pidf.test();
+        pidf.testColor(true);
 
     }
 

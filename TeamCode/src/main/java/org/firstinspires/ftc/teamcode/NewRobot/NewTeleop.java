@@ -18,11 +18,9 @@ public class NewTeleop extends OpMode {
 
     @Override
     public void init() {
-        //collection3d = new Collection3d(hardwareMap, this);
         lift = new Lift(hardwareMap, this, 145.1, 1, 1.15);
         pidf = new PIDF(hardwareMap, this);
         drivetrain = new Drivetrain(hardwareMap, this, 384.5, 1, 4);
-        // pdfl = new PDFL(0,0,0,0, 384.5, 1, 1);
 
 
     }
@@ -30,7 +28,7 @@ public class NewTeleop extends OpMode {
     public void loop() {
         drivetrain.UpdateDriveTrain();
         lift.soloControls();
-         pidf.tele(true);
+         pidf.tele();
          //lift.teleLift();
         //pidf.test();
 
