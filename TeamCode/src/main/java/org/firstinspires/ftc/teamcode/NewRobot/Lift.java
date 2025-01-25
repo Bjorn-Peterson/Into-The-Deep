@@ -6,14 +6,11 @@ import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 public class Lift {
     public enum LiftState {
@@ -33,7 +30,7 @@ public class Lift {
 
     TeleState teleState = TeleState.START;
     LiftState liftState = LiftState.START;
-    private PIDController controller;
+    PIDController controller;
     public static double p = 0.035, i = 0, d = 0.001;
     public static double f = 0.031;
     public static int target;
@@ -41,23 +38,22 @@ public class Lift {
     double closed = .87;
     double open = .754;
     double frontSpec = .122;
-    double backSpec = .63;
-    double transferPos = .18;
-    double midPos = .45;
+    double backSpec = .54;
+    double midPos = .33;
     double specClosed = .83;
 
 
-    private DcMotorEx lift;
+     DcMotorEx lift;
+     DcMotorEx lift2;
     public Servo claw;
     public Servo deliveryS;
     public DigitalChannel liftTouch;
-    private ElapsedTime liftTimer = new ElapsedTime();
-    private ElapsedTime deliveryTimer = new ElapsedTime();
-    private OpMode theOpMode;
+    ElapsedTime liftTimer = new ElapsedTime();
+    ElapsedTime deliveryTimer = new ElapsedTime();
+    OpMode theOpMode;
     double countsPerInch;
     DigitalChannel dBeam;
 
-    double lowerMid = .35;
 
 
     public Lift(HardwareMap hardwareMap, OpMode opMode, double encoderTicksPerRev, double gearRatio, double wheelDiameter) {
@@ -65,10 +61,13 @@ public class Lift {
         countsPerInch = (encoderTicksPerRev * gearRatio) / (wheelDiameter * 3.14);
         theOpMode = opMode;
         lift = hardwareMap.get(DcMotorEx.class, "lift");
+        lift2 = hardwareMap.get(DcMotorEx.class, "lift2");
 
         lift.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        lift2.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
         dBeam = hardwareMap.get(DigitalChannel.class, "dBeam");
@@ -139,13 +138,16 @@ public class Lift {
 
             if (theOpMode.gamepad1.right_trigger > .1) {
                 lift.setPower(theOpMode.gamepad1.right_trigger);
+                lift2.setPower(theOpMode.gamepad1.right_trigger);
 
             }
             else if (theOpMode.gamepad1.left_trigger > .1) {
                 lift.setPower(-theOpMode.gamepad1.left_trigger);
+                lift2.setPower(-theOpMode.gamepad1.left_trigger);
 
             } else {
                 lift.setPower(0);
+                lift2.setPower(0);
             }
                 if (!liftTouch.getState()) {
                     teleState = TeleState.LOW;
@@ -153,8 +155,10 @@ public class Lift {
                 break;
             case LOW:
                 lift.setPower(0);
+                lift2.setPower(0);
                 if (theOpMode.gamepad1.right_trigger > .1) {
                     lift.setPower(theOpMode.gamepad1.right_trigger);
+                    lift2.setPower(theOpMode.gamepad1.right_trigger);
                     teleState = TeleState.MANUAL;
                 }
                 break;
@@ -208,6 +212,7 @@ public class Lift {
             double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
             double power = pid + ff;
             lift.setPower(power);
+            lift2.setPower(power);
             theOpMode.telemetry.addData("LiftState", liftState);
             theOpMode.telemetry.addData("target", target);
             theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
@@ -261,6 +266,7 @@ public class Lift {
             double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
             double power = pid + ff;
             lift.setPower(power);
+            lift2.setPower(power);
             theOpMode.telemetry.addData("LiftState", liftState);
             theOpMode.telemetry.addData("target", target);
             theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
@@ -283,22 +289,24 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 1345;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 200) {
+                    target = 970;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 25) {
                         deliveryS.setPosition(backSpec);
-                        claw.setPosition(open);
                         liftTimer.reset();
                         liftState = LiftState.LIFTED;
                     }
                     break;
                 case LIFTED:
-                    if (liftTimer.seconds() >= .24) {
+                    if (liftTimer.seconds() >= .03) {
+                        claw.setPosition(open);
+                    }
+                    if (liftTimer.seconds() >= .2) {
                         deliveryS.setPosition(midPos);
-
-                        if (liftTimer.seconds() >= .28) {
+                    }
+                        if (liftTimer.seconds() >= .3) {
                             liftState = LiftState.START;
                             return false;
-                        }
+
                     }
                         break;
                 default:
@@ -311,6 +319,12 @@ public class Lift {
             double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
             double power = pid + ff;
             lift.setPower(power);
+            lift2.setPower(power);
+            theOpMode.telemetry.addData("LiftState", liftState);
+            theOpMode.telemetry.addData("target", target);
+            theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
+            theOpMode.telemetry.update();
+
             return true;
         }
     }
@@ -328,9 +342,10 @@ public class Lift {
                     liftState = LiftState.DOWN;
                     break;
                 case DOWN:
-                    target = -30;
+                    target = -10;
                     if (Math.abs(lift.getCurrentPosition() - target) < 15) {
-                        lift.setPower(-0.1);
+                        lift.setPower(-0.04);
+                        lift2.setPower(-0.04);
                         liftState = LiftState.START;
                         return false;
                     }
@@ -344,7 +359,8 @@ public class Lift {
             double pid = controller.calculate(curPos, target);
             double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
             double power = pid + ff;
-            lift.setPower(power);
+            lift.setPower(power * .8);
+            lift2.setPower(power * .8);
             return true;
         }
     }
@@ -364,6 +380,7 @@ public class Lift {
                     deliveryS.setPosition(frontSpec);
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
                             lift.setPower(0);
+                            lift2.setPower(0);
                             claw.setPosition(closed);
                             liftState = LiftState.START;
                             return false;
@@ -379,6 +396,7 @@ public class Lift {
             double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
             double power = pid + ff;
             lift.setPower(power);
+            lift2.setPower(power);
             return true;
         }
     }

@@ -2,8 +2,7 @@ package org.firstinspires.ftc.teamcode.OldStuff;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-//https:www.youtube.com/watch?v=pQ_aVTM9qX0
-@TeleOp(name = "Teleop", group = "Iterative Opmode")
+@TeleOp(name = "TeleopTest")
 public class Teleop extends OpMode {
 
     PIDF pidf;
@@ -19,7 +18,7 @@ public class Teleop extends OpMode {
     @Override
     public void loop() {
 
-        pidf.testColor(true);
+        pidf.testColor(false);
 
     }
 

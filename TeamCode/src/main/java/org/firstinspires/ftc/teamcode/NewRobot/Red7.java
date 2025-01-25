@@ -14,8 +14,8 @@ import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 
 @Config
-@Autonomous(name = "Red 8", group = "Autonomous")
-public class SampleTest extends LinearOpMode {
+@Autonomous(name = "Red 7", group = "Autonomous")
+public class Red7 extends LinearOpMode {
 
 
     @Override
@@ -80,6 +80,16 @@ public class SampleTest extends LinearOpMode {
                 afterDisp(30, lift.liftUp()).
                 strafeToConstantHeading(new Vector2d(6.5, 14)).
                 build();
+        Action collectLast = drive.actionBuilder(new Pose2d(10, 19, 0)).
+                setReversed(false).
+                afterDisp(6, lift.liftDown()).
+                afterDisp(50, pidf.subCollect()).
+                splineTo(new Vector2d(52, -14), Math.toRadians(-90)).
+                build();
+        Action scoreLast = drive.actionBuilder(new Pose2d(50, -13, -45)).
+                afterDisp(30, lift.liftUp()).
+                strafeToConstantHeading(new Vector2d(6.5, 14)).
+                build();
 
         Actions.runBlocking(pidf.initPositions());
 
@@ -95,15 +105,14 @@ public class SampleTest extends LinearOpMode {
                         new ParallelAction(score3, lift.liftUp()),
                         new ParallelAction(collect3, pidf.collectRun(),lift.liftDown()),
                         new ParallelAction(score4, lift.liftUp(), pidf.retractCollection()),
-                        new ParallelAction(num7, pidf.collectRun(), lift.liftDown()),
-                        new ParallelAction(score7, pidf.retractCollection()),
                         new ParallelAction(sub),
                         new ParallelAction(afterSub, pidf.retractCollection()),
                         new ParallelAction(collect6),
                         new ParallelAction(jk, pidf.retractCollection()),
                         new ParallelAction(collect8),
                         new ParallelAction(score8, pidf.retractCollection()),
-                        new ParallelAction(heading, pidf.megaExtend(), lift.liftDown())
+                        new ParallelAction(collectLast),
+                        new ParallelAction(scoreLast, pidf.retractCollection())
 
                 ));
     }

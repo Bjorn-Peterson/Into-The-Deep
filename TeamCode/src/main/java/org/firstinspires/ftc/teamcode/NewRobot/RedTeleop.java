@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 
-@TeleOp(name = "BlueTeleop")
-public class NewTeleop extends OpMode {
+@TeleOp(name = "RedTeleop")
+public class RedTeleop extends OpMode {
 
     PIDF pidf;
     Drivetrain drivetrain;
@@ -27,7 +27,7 @@ public class NewTeleop extends OpMode {
     public void loop() {
         drivetrain.UpdateDriveTrain();
         lift.soloControls();
-         pidf.tele(false);
+        pidf.tele(true);
 
 
     }
