@@ -22,25 +22,26 @@ public class Lift {
 
     public enum TeleState {
         START,
-        TOP,
         LOW,
         SPECIMEN,
-        MANUAL
+        MANUAL,
+        UP
     }
 
     TeleState teleState = TeleState.START;
     LiftState liftState = LiftState.START;
     PIDController controller;
-    public static double p = 0.035, i = 0, d = 0.001;
-    public static double f = 0.031;
+    public static double p = 0.025, i = 0, d = 0.001;
+    public static double f = 0.021;
     public static int target;
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
     double closed = .87;
     double open = .754;
-    double frontSpec = .122;
-    double backSpec = .54;
-    double midPos = .33;
+    double frontSpec = .32;
+    double backSpec = .69;
+    double midPos = .59;
     double specClosed = .83;
+    double specPos = .71;
 
 
      DcMotorEx lift;
@@ -80,49 +81,74 @@ public class Lift {
 
         switch (teleState) {
             case START:
-                if (theOpMode.gamepad1.dpad_left) {
-                    teleState = TeleState.SPECIMEN;
+                if (theOpMode.gamepad1.dpad_right) {
+                    teleState = TeleState.UP;
                 }
                 if (theOpMode.gamepad1.right_trigger > 0.1 || theOpMode.gamepad1.left_trigger > 0.1) {
                     teleState = TeleState.MANUAL;
                 }
-
+                if (!liftTouch.getState()) {
+                    teleState = TeleState.LOW;
+                }
                 break;
-            case SPECIMEN:
-                target = 800;
+            case MANUAL:
+
+                if (theOpMode.gamepad1.right_trigger > .1) {
+                    lift.setPower(theOpMode.gamepad1.right_trigger);
+                    lift2.setPower(theOpMode.gamepad1.right_trigger);
+
+                }
+                else if (theOpMode.gamepad1.left_trigger > .1) {
+                    lift.setPower(-theOpMode.gamepad1.left_trigger);
+                    lift2.setPower(-theOpMode.gamepad1.left_trigger);
+
+                } else {
+                    lift.setPower(0);
+                    lift2.setPower(0);
+                }
+                if (!liftTouch.getState()) {
+                    teleState = TeleState.LOW;
+                }
+                break;
+            case LOW:
+                lift.setPower(0);
+                lift2.setPower(0);
+                if (theOpMode.gamepad1.right_trigger > .1) {
+                    lift.setPower(theOpMode.gamepad1.right_trigger);
+                    lift2.setPower(theOpMode.gamepad1.right_trigger);
+                    teleState = TeleState.MANUAL;
+                }
+                break;
+            case UP:
+                target = 500;
                 controller.setPID(p, i, d);
                 int curPos = lift.getCurrentPosition();
                 double pid = controller.calculate(curPos, target);
-                double ff = Math.cos(Math.toRadians(target)) * f;
+                double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
                 double power = pid + ff;
                 lift.setPower(power);
-                if (theOpMode.gamepad1.right_trigger > 0.1 || theOpMode.gamepad1.left_trigger > 0.1) {
-                    teleState = TeleState.MANUAL;
-                }
-
-                break;
-            case MANUAL:
-                if (theOpMode.gamepad1.right_trigger > 0.1) {
-                    lift.setPower(theOpMode.gamepad1.right_trigger);
-                } else if (theOpMode.gamepad1.left_trigger > 0.1) {
-                    lift.setPower(-theOpMode.gamepad1.left_trigger);
-
-                } else if (theOpMode.gamepad1.dpad_left) {
-                    teleState = TeleState.SPECIMEN;
-                } else {
+                lift2.setPower(power);
+                if (lift.getCurrentPosition()-target <= 30) {
                     lift.setPower(0);
+                    lift2.setPower(0);
+                    target = lift.getCurrentPosition();
+                    teleState = TeleState.START;
                 }
-                break;
-            default:
-                teleState = TeleState.START;
+            break;
+            case SPECIMEN:
+
+
+            default: teleState = TeleState.START;
         }
+
+        theOpMode.telemetry.addData("LiftState", liftState);
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
-        theOpMode.telemetry.addData("Current State", teleState);
         theOpMode.telemetry.update();
 
 
     }
+
 
     public void soloControls() {
         switch (teleState) {
@@ -167,91 +193,30 @@ public class Lift {
 
     }
 
-    public class LiftAction implements Action {
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet) {
-            switch (liftState) {
-                case START:
-                    claw.setPosition(closed);
-                    liftState = LiftState.LIFT;
-                    break;
-                case LIFT:
-                    target = 1345;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 200) {
-                        deliveryS.setPosition(backSpec);
-                        claw.setPosition(open);
-                        liftTimer.reset();
-                        liftState = LiftState.LIFTED;
-                    }
-                    break;
-                case LIFTED:
-                    if (liftTimer.seconds() >= .3) {
-                        deliveryS.setPosition(midPos);
-
-                        if (liftTimer.seconds() >= .42) {
-                            liftState = LiftState.DOWN;
-                        }
-                    }
-                    break;
-                case DOWN:
-                    target = -30;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 15) {
-                        lift.setPower(-0.1);
-                        liftState = LiftState.START;
-                        return false;
-
-                    }
-                    break;
-                default:
-                    liftState = LiftState.START;
-
-            }
-            controller.setPID(p, i, d);
-            int curPos = lift.getCurrentPosition();
-            double pid = controller.calculate(curPos, target);
-            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
-            double power = pid + ff;
-            lift.setPower(power);
-            lift2.setPower(power);
-            theOpMode.telemetry.addData("LiftState", liftState);
-            theOpMode.telemetry.addData("target", target);
-            theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
-            theOpMode.telemetry.update();
-            return true;
-        }
-    }
-
-    public Action liftAction() {
-        return new LiftAction();
-    }
-
     public class SpecDeliver implements Action {
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (liftState) {
                 case START:
-                    claw.setPosition(closed);
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 1000;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 30) {
-                        deliveryS.setPosition(frontSpec);
-                        liftTimer.reset();
-                        liftState = LiftState.LIFTED;
+                    claw.setPosition(closed);
+                    deliveryS.setPosition(backSpec);
+                    target = 325;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 35) {
+                        claw.setPosition(open);
+                        lift.setPower(0);
+                        lift2.setPower(0);
+                        liftState = LiftState.START;
+                        return false;
                     }
                     break;
                 case LIFTED:
-                    if (liftTimer.seconds() >= .3) {
+                    if (deliveryTimer.seconds() >= .1) {
                         claw.setPosition(open);
-                        deliveryS.setPosition(midPos);
-                        liftState = LiftState.DOWN;
-                    }
-                    break;
-                case DOWN:
-                    target = -20;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 20) {
-                        lift.setPower(-.1);
+                        lift.setPower(0);
+                        lift2.setPower(0);
                         liftState = LiftState.START;
                         return false;
                     }
@@ -263,13 +228,14 @@ public class Lift {
             controller.setPID(p, i, d);
             int curPos = lift.getCurrentPosition();
             double pid = controller.calculate(curPos, target);
-            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch));
             double power = pid + ff;
             lift.setPower(power);
             lift2.setPower(power);
             theOpMode.telemetry.addData("LiftState", liftState);
             theOpMode.telemetry.addData("target", target);
             theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
+            theOpMode.telemetry.addData("power", power);
             theOpMode.telemetry.update();
             return true;
         }
@@ -289,21 +255,21 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 970;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 25) {
+                    target = 980;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 40) {
                         deliveryS.setPosition(backSpec);
                         liftTimer.reset();
                         liftState = LiftState.LIFTED;
                     }
                     break;
                 case LIFTED:
-                    if (liftTimer.seconds() >= .03) {
+                    if (liftTimer.seconds() >= .08) {
                         claw.setPosition(open);
                     }
-                    if (liftTimer.seconds() >= .2) {
+                    if (liftTimer.seconds() >= .14) {
                         deliveryS.setPosition(midPos);
                     }
-                        if (liftTimer.seconds() >= .3) {
+                        if (liftTimer.seconds() >= .18) {
                             liftState = LiftState.START;
                             return false;
 
@@ -338,14 +304,14 @@ public class Lift {
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (liftState) {
                 case START:
-                    deliveryS.setPosition(midPos);
+                    //deliveryS.setPosition(midPos);
                     liftState = LiftState.DOWN;
                     break;
                 case DOWN:
-                    target = -10;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 15) {
-                        lift.setPower(-0.04);
-                        lift2.setPower(-0.04);
+                    target = -40;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 30 && !liftTouch.getState()) {
+                        lift.setPower(-0.12);
+                        lift2.setPower(-0.12);
                         liftState = LiftState.START;
                         return false;
                     }
@@ -376,12 +342,11 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 860;
-                    deliveryS.setPosition(frontSpec);
+                    target = 600;
+                    deliveryS.setPosition(backSpec);
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
-                            lift.setPower(0);
-                            lift2.setPower(0);
-                            claw.setPosition(closed);
+                        lift.setPower(0);
+                        lift2.setPower(0);
                             liftState = LiftState.START;
                             return false;
                         }
@@ -412,9 +377,8 @@ public class Lift {
                             deliveryTimer.reset();
                             break;
                         case DOWN:
-                            target = -30;
                             deliveryS.setPosition(backSpec);
-                            if (deliveryTimer.seconds() >= .2) {
+                            if (deliveryTimer.seconds() >= .5) {
                                 claw.setPosition(open);
                                 liftState = LiftState.START;
                                 return false;
@@ -440,7 +404,7 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 1000;
+                    target = 700;
                     if (Math.abs(lift.getCurrentPosition() - target) < 30) {
                         claw.setPosition(closed);
                         deliveryS.setPosition(frontSpec);
@@ -483,6 +447,96 @@ public class Lift {
 
     public Action spec() {
         return new Spec();
+    }
+    public class LiftTest implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (liftState) {
+                case START:
+                    claw.setPosition(closed);
+                    deliveryS.setPosition(midPos);
+                    liftState = LiftState.LIFT;
+                    break;
+                case LIFT:
+                    target = 600;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 25) {
+                        deliveryS.setPosition(backSpec);
+                        liftTimer.reset();
+                        liftState = LiftState.LIFTED;
+                    }
+                    break;
+                case LIFTED:
+                        return false;
+                default:
+                    liftState = LiftState.START;
+
+            }
+            controller.setPID(p, i, d);
+            int curPos = lift.getCurrentPosition();
+            double pid = controller.calculate(curPos, target);
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double power = pid + ff;
+            lift.setPower(power);
+            lift2.setPower(power);
+            theOpMode.telemetry.addData("LiftState", liftState);
+            theOpMode.telemetry.addData("target", target);
+            theOpMode.telemetry.addData("Current Position", lift.getCurrentPosition());
+            theOpMode.telemetry.update();
+
+            return true;
+        }
+    }
+
+    public Action liftTest() {
+        return new LiftTest();
+    }
+
+
+
+
+
+
+
+
+
+    public class LiftPickup implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (liftState) {
+                case START:
+                    claw.setPosition(closed);
+                    deliveryTimer.reset();
+                    liftState = LiftState.LIFT;
+                    break;
+                case LIFT:
+                    if (deliveryTimer.seconds() >= .1) {
+                        target = 300;
+                        deliveryS.setPosition(backSpec);
+                        if (Math.abs(lift.getCurrentPosition() - target) < 20) {
+                            lift.setPower(0);
+                            lift2.setPower(0);
+                            liftState = LiftState.START;
+                            return false;
+                        }
+                    }
+                        break;
+
+                default:
+                    liftState = LiftState.START;
+
+            }
+            controller.setPID(p, i, d);
+            int curPos = lift.getCurrentPosition();
+            double pid = controller.calculate(curPos, target);
+            double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
+            double power = pid + ff;
+            lift.setPower(power);
+            lift2.setPower(power);
+            return true;
+        }
+    }
+    public Action liftPickup() {
+        return new LiftPickup();
     }
 }
 

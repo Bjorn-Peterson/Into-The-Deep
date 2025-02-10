@@ -49,6 +49,7 @@ public class PIDF {
     public Servo lCollection;
     public Servo claw;
     public Servo deliveryS;
+    public Servo sweep;
 
     int extended = 565;
     int retracted = 20;
@@ -61,14 +62,14 @@ public class PIDF {
 
     double closed = .87;
     double open = .754;
-    double specClosed = .83;
-    double frontSpec = .05;
-    double backSpec = .54;
-    double transferPos = .085;
-    double midPos = .33;
-    double lowerMid = .15;
-    double specPos = .5;
-    double midMid = .22;
+    double specClosed = .835;
+    double frontSpec = .32;
+    double backSpec = .69;
+    double transferPos = .35;
+    double midPos = .59;
+    double lowerMid = .38;
+    double specPos = .695;
+    double midMid = .58;
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
@@ -94,6 +95,7 @@ public class PIDF {
         rCollection.setDirection(Servo.Direction.REVERSE);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
+        deliveryS.setDirection(Servo.Direction.REVERSE);
         collection = hardwareMap.get(DcMotorEx.class, "collection");
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         touch = hardwareMap.get(DigitalChannel.class, "touch");
@@ -105,9 +107,31 @@ public class PIDF {
         dBeam.setMode(DigitalChannel.Mode.INPUT);
         lSwitch = hardwareMap.get(DigitalChannel.class, "lSwitch");
         lSwitch.setMode(DigitalChannel.Mode.INPUT);
+        sweep = hardwareMap.get(Servo.class, "sweep");
+    }
+
+    public void testSensors() {
+        if (!cBeam.getState()) {
+            theOpMode.telemetry.addData("Collection Beam", "Broken");
+        } else {
+            theOpMode.telemetry.addData("Collection Beam", "Not Broken");
+        }
+        if (!dBeam.getState()) {
+            theOpMode.telemetry.addData("Delivery Beam", "Broken");
+        }
+        else {
+            theOpMode.telemetry.addData("Delivery Beam", "Not Broken");
+        }
+        theOpMode.telemetry.update();
     }
 
     public void tele(boolean isRed) {
+        if (theOpMode.gamepad2.left_bumper) {
+            sweep.setPosition(0);
+        }
+        else if (theOpMode.gamepad2.right_bumper) {
+            sweep.setPosition(.5);
+        }
 
         if (theOpMode.gamepad1.left_bumper) {
             failTimer.reset();
@@ -143,7 +167,7 @@ public class PIDF {
                 break;
             case SPEC:
                 target = mid;
-                if (Math.abs(extend.getCurrentPosition() - mid) < 50) {
+                if (Math.abs(extend.getCurrentPosition() - mid) < 30) {
                     collection.setPower(.95);
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
@@ -169,6 +193,7 @@ public class PIDF {
 
                 //Fully Retracted in transfer position
             case START:
+                //sweep.setPosition(0);
                 collection.setPower(0);
                 rCollection.setPosition(xHeight);
                 lCollection.setPosition(xHeight);
@@ -184,6 +209,7 @@ public class PIDF {
                     extendState = ExtendState.EXTEND;
                 }
                 if (theOpMode.gamepad1.y) {
+                    sweep.setPosition(.5);
                     target = mid;
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
@@ -254,7 +280,15 @@ public class PIDF {
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
                     extendState = ExtendState.MID;
-                    collection.setPower(.9);
+                    collection.setPower(.95);
+                }
+                if (theOpMode.gamepad1.x) {
+                    target = extended;
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+                    extendState = ExtendState.EXTENDED;
+                    collection.setPower(.95);
+
                 }
                 break;
             case RETRACT:
@@ -276,7 +310,7 @@ public class PIDF {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                     if (Math.abs(extend.getCurrentPosition() - retracted) < 25 && !lSwitch.getState()) {
-                        collection.setPower(.65);
+                        collection.setPower(.6);
                     }
                 }
                 if (!dBeam.getState()) {
@@ -339,6 +373,7 @@ public class PIDF {
         theOpMode.telemetry.addData("Current State", extendState);
         theOpMode.telemetry.addData("power", power);
         theOpMode.telemetry.addData("failTimer", failTimer);
+        theOpMode.telemetry.addData("deliveryS", deliveryS.getPosition());
 //        theOpMode.telemetry.addData("delivery position", deliveryS.getPosition());
         if (!dBeam.getState()) {
             theOpMode.telemetry.addData("Beam", "Broken");
@@ -448,7 +483,6 @@ public class PIDF {
                 case START:
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
-                    deliveryS.setPosition(midPos);
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
 
@@ -461,24 +495,39 @@ public class PIDF {
                     lCollection.setPosition(collect);
                     if (Math.abs(extend.getCurrentPosition() - target) < 300) {
 
-                        collection.setPower(.95);
+                        collection.setPower(.9);
                         beamTimer.reset();
                         failTimer.reset();
                         extendState = ExtendState.EXTENDED;
                     }
+                    if (!cBeam.getState()) {
+                        deliveryS.setPosition(lowerMid);
+                        target = retracted;
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        //target = retracted;
+                        collection.setPower(0);
+                        extendState = ExtendState.RETRACT;
+                        beamTimer.reset();
+
+
+                    }
                     break;
                 case EXTENDED:
-                    if (beamTimer.seconds() > 0.8) {
+                    if (beamTimer.seconds() > 0.85) {
+                        sweep.setPosition(.5);
                         target = shortPos;
                         lCollection.setPosition(transfer);
                         rCollection.setPosition(transfer);
                         if (beamTimer.seconds() > 1.1) {
+                            sweep.setPosition(0);
                             lCollection.setPosition(collect);
                             rCollection.setPosition(collect);
                             target = extended;
                             beamTimer.reset();
                         }
-                        if (failTimer.seconds() >= 2.7) {
+                        if (failTimer.seconds() >= 1.6) {
+                            sweep.setPosition(0);
                             extend.setPower(0);
                             collection.setPower(0);
                             target = retracted;
@@ -490,6 +539,7 @@ public class PIDF {
 
                     // If we collect a specimen, retract extension, rotate to transfer position, stop collection
                     if (!cBeam.getState()) {
+                        deliveryS.setPosition(lowerMid);
                         target = retracted;
                         rCollection.setPosition(xHeight);
                         lCollection.setPosition(xHeight);
@@ -511,32 +561,62 @@ public class PIDF {
                     break;
                 case RETRACT:
                     claw.setPosition(open);
-                    if (beamTimer.seconds() >= 1.5) {
-                        collection.setPower(-.95);
-                        extendState = ExtendState.EXTEND;
-                    }
+
                     if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
                         deliveryS.setPosition(transferPos);
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
-                        if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
+                        if (Math.abs(extend.getCurrentPosition() - retracted) < 30 && !lSwitch.getState()) {
+                            theOpMode.telemetry.addData("Does it Work?", "");
+                            theOpMode.telemetry.update();
                             collection.setPower(.66);
 
+
+                            if (beamTimer.seconds() >= 1.5 && cBeam.getState()) {
+                                collection.setPower(0);
+                                extendState = ExtendState.EXTEND;
+                            }
+                            if (beamTimer.seconds() >= 1.5 && !cBeam.getState()) {
+                                extendState = ExtendState.EJECT;
+
+                            }
                         }
 
 
-                        if (!dBeam.getState()) {
-                            rCollection.setPosition(xHeight);
-                            lCollection.setPosition(xHeight);
-                            collection.setPower(-.9);
-                            transferTimer.reset();
-                            claw.setPosition(closed);
-                            extendState = ExtendState.TRANSFER;
-                        }
+
+                    }
+                    if (!dBeam.getState()) {
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        collection.setPower(-.9);
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
                     }
 
-
                     break;
+                case EJECT:
+                    if (beamTimer.seconds() >= 1.5 && cBeam.getState()) {
+                        collection.setPower(0);
+                        extendState = ExtendState.EXTEND;
+                    }
+                    collection.setPower(-.4);
+                    if (beamTimer.seconds() >= 1.6) {
+                        collection.setPower(.75);
+                    }
+                    if (beamTimer.seconds() >= 2.2) {
+                        extendState = ExtendState.EXTEND;
+                    }
+
+                    if (!dBeam.getState()) {
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        collection.setPower(-.95);
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
+                    }
+            break;
                 case TRANSFER:
                     target = shortPos;
                     if (transferTimer.seconds() >= .1) {
@@ -559,6 +639,14 @@ public class PIDF {
             extend.setPower(power);
             theOpMode.telemetry.addData("Current State", extendState);
             theOpMode.telemetry.addData("Beam timer", beamTimer);
+            theOpMode.telemetry.addData("Current Position", curPos);
+            theOpMode.telemetry.addData("Target Position", target);
+            if (!lSwitch.getState()) {
+                theOpMode.telemetry.addData("True", "");
+            }
+            else {
+                theOpMode.telemetry.addData("False", "");
+            }
             if (!dBeam.getState()) {
                 theOpMode.telemetry.addData("Beam", "Broken");
             } else {
@@ -576,10 +664,36 @@ public class PIDF {
     public class InitPositions implements Action {
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
+            //  switch (extendState) {
+            //  case START:
             rCollection.setPosition(initPos);
             lCollection.setPosition(initPos);
             deliveryS.setPosition(midPos);
+            claw.setPosition(closed);
+            target = -50;
             return false;
+            //  break;
+                    /*
+                case RETRACT:
+                    if (!touch.getState()) {
+                        extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                        extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                        target = 0;
+                        extend.setPower(0);
+                        extendState = ExtendState.START;
+                    }
+
+                    return false;
+            }
+            controller.setPID(p, i, d);
+            int curPos = extend.getCurrentPosition();
+            double power = controller.calculate(curPos, target);
+            extend.setPower(power);
+            return true;
+        }
+
+                     */
+
         }
     }
 
@@ -625,6 +739,7 @@ public class PIDF {
         public boolean run(@NonNull TelemetryPacket packet) {
             switch (extendState) {
                 case START:
+                    sweep.setPosition(.5);
                     extendState = ExtendState.EXTEND;
                     rCollection.setPosition(xHeight);
                     lCollection.setPosition(xHeight);
@@ -656,6 +771,7 @@ public class PIDF {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    sweep.setPosition(0);
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
                     deliveryS.setPosition(midPos);
@@ -669,6 +785,7 @@ public class PIDF {
                     collection.setPower(.95);
 
                     if (Math.abs(extend.getCurrentPosition() - target) < 350) {
+                        sweep.setPosition(.5);
                         rCollection.setPosition(collect);
                         lCollection.setPosition(collect);
                         collection.setPower(.95);
@@ -729,7 +846,7 @@ public class PIDF {
                     }
                     break;
                 case RETRACT:
-                    if ((double) colorSensor.blue() / colorSensor.red() >= 1.8 && (Math.abs(extend.getCurrentPosition())  >= 80)) {
+                    if ((double) colorSensor.blue() / colorSensor.red() >= 1.6 && (Math.abs(extend.getCurrentPosition())  >= 60)) {
                         extendState = ExtendState.EXTEND;
                     }
 
@@ -737,6 +854,10 @@ public class PIDF {
                     if (beamTimer.seconds() >= 1.2 && cBeam.getState()) {
                         extendState = ExtendState.EXTEND;
                     }
+                    if (beamTimer.seconds() >= 1.5 && !cBeam.getState()) {
+                        extendState = ExtendState.EJECT;
+                    }
+
                     if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
                         deliveryS.setPosition(transferPos);
                         rCollection.setPosition(transfer);
@@ -759,9 +880,27 @@ public class PIDF {
 
 
                     break;
+                case EJECT:
+                    collection.setPower(-.6);
+                    if (beamTimer.seconds() >= 1.7) {
+                        collection.setPower(.66);
+                    }
+                    if (beamTimer.seconds() >= 3) {
+                        extendState = ExtendState.EXTEND;
+                    }
+
+                    if (!dBeam.getState()) {
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        collection.setPower(-.95);
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
+                    }
+                    break;
                 case TRANSFER:
                     target = shortPos;
-                    if (transferTimer.seconds() >= .17) {
+                    if (transferTimer.seconds() >= .1) {
                         extend.setPower(0);
                         collection.setPower(0);
                         target = retracted;
@@ -769,16 +908,6 @@ public class PIDF {
                         claw.setPosition(closed);
                         deliveryS.setPosition(midPos);
                         return false;
-                    }
-                    break;
-                case REJECT:
-                    target = 450;
-                    collection.setPower(-.6);
-                    if (Math.abs(extend.getCurrentPosition() - extended) < 200 && cBeam.getState()) {
-                        collection.setPower(.95);
-                        rCollection.setPosition(collect);
-                        lCollection.setPosition(collect);
-                        extendState = ExtendState.EXTENDED;
                     }
                     break;
 
@@ -918,161 +1047,353 @@ public class PIDF {
 
 
 
-        public class SubCollectBlue implements Action {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                switch (extendState) {
-                    //Fully Retracted in transfer position
-                    case START:
-                        collection.setPower(0);
-                        extendState = ExtendState.EXTEND;
-                        deliveryS.setPosition(midPos);
+    public class SubCollectBlue implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (extendState) {
+                //Fully Retracted in transfer position
+                case START:
+                    sweep.setPosition(0);
+                    collection.setPower(0);
+                    extendState = ExtendState.EXTEND;
+                    deliveryS.setPosition(midPos);
 
 
-                        break;
-                    // Rotate to collecting position
-                    case EXTEND:
-                        target = extended;
-                        deliveryS.setPosition(lowerMid);
+                    break;
+                // Rotate to collecting position
+                case EXTEND:
+                    target = extended;
+                    deliveryS.setPosition(lowerMid);
+                    collection.setPower(.95);
+
+                    if (Math.abs(extend.getCurrentPosition() - target) < 350) {
+                        sweep.setPosition(.5);
+                        rCollection.setPosition(collect);
+                        lCollection.setPosition(collect);
                         collection.setPower(.95);
-
-                        if (Math.abs(extend.getCurrentPosition() - target) < 350) {
-                            rCollection.setPosition(collect);
+                        beamTimer.reset();
+                        failTimer.reset();
+                        extendState = ExtendState.EXTENDED;
+                    }
+                    if (!dBeam.getState()) {
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        collection.setPower(-.95);
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
+                    }
+                    break;
+                case EXTENDED:
+                    target = extended;
+                    if (beamTimer.seconds() > 0.8) {
+                        target = mid;
+                        lCollection.setPosition(transfer);
+                        rCollection.setPosition(transfer);
+                        if (beamTimer.seconds() > 1.1) {
                             lCollection.setPosition(collect);
-                            collection.setPower(.95);
+                            rCollection.setPosition(collect);
+                            target = extended;
                             beamTimer.reset();
-                            failTimer.reset();
-                            extendState = ExtendState.EXTENDED;
                         }
-                        if (!dBeam.getState()) {
-                            rCollection.setPosition(xHeight);
-                            lCollection.setPosition(xHeight);
-                            collection.setPower(-.95);
-                            transferTimer.reset();
-                            claw.setPosition(closed);
-                            extendState = ExtendState.TRANSFER;
-                        }
-                        break;
-                    case EXTENDED:
-                        target = extended;
-                        if (beamTimer.seconds() > 0.8) {
-                            target = mid;
-                            lCollection.setPosition(transfer);
-                            rCollection.setPosition(transfer);
-                            if (beamTimer.seconds() > 1.1) {
-                                lCollection.setPosition(collect);
-                                rCollection.setPosition(collect);
-                                target = extended;
-                                beamTimer.reset();
-                            }
-                            if (failTimer.seconds() >= 3.4) {
-                                extend.setPower(0);
-                                collection.setPower(0);
-                                target = retracted;
-                                extendState = ExtendState.START;
-                                deliveryS.setPosition(midPos);
-                                return false;
-                            }
-                        }
-
-                        // If we collect a sample, retract extension, rotate to transfer position, stop collection
-                        if (!cBeam.getState()) {
-                            target = retracted;
-                            rCollection.setPosition(xHeight);
-                            lCollection.setPosition(xHeight);
-                            //target = retracted;
-                            collection.setPower(0);
-                            extendState = ExtendState.RETRACT;
-                            beamTimer.reset();
-
-
-                        }
-                        if (!dBeam.getState()) {
-                            rCollection.setPosition(xHeight);
-                            lCollection.setPosition(xHeight);
-                            collection.setPower(-.95);
-                            transferTimer.reset();
-                            claw.setPosition(closed);
-                            extendState = ExtendState.TRANSFER;
-                        }
-                        break;
-                    case RETRACT:
-                        if (((double) colorSensor.red() / colorSensor.blue()) >= 2 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.3) && (Math.abs(extend.getCurrentPosition())  >= 80)) {
-                            extendState = ExtendState.EXTEND;
-                        }
-
-                        claw.setPosition(open);
-                        if (beamTimer.seconds() >= 1.2 && cBeam.getState()) {
-                            extendState = ExtendState.EXTEND;
-                        }
-                        if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
-                            deliveryS.setPosition(transferPos);
-                            rCollection.setPosition(transfer);
-                            lCollection.setPosition(transfer);
-                            if (Math.abs(extend.getCurrentPosition() - retracted) < 25 && !lSwitch.getState()) {
-                                collection.setPower(.73);
-
-                            }
-
-
-                            if (!dBeam.getState()) {
-                                rCollection.setPosition(xHeight);
-                                lCollection.setPosition(xHeight);
-                                collection.setPower(-.95);
-                                transferTimer.reset();
-                                claw.setPosition(closed);
-                                extendState = ExtendState.TRANSFER;
-                            }
-                        }
-
-
-                        break;
-                    case TRANSFER:
-                        target = shortPos;
-                        if (transferTimer.seconds() >= .17) {
+                        if (failTimer.seconds() >= 3.4) {
                             extend.setPower(0);
                             collection.setPower(0);
                             target = retracted;
                             extendState = ExtendState.START;
-                            claw.setPosition(closed);
                             deliveryS.setPosition(midPos);
                             return false;
                         }
-                        break;
-                    case REJECT:
-                        target = 450;
-                        collection.setPower(-.6);
-                        if (Math.abs(extend.getCurrentPosition() - extended) < 200 && cBeam.getState()) {
-                            collection.setPower(.95);
-                            rCollection.setPosition(collect);
-                            lCollection.setPosition(collect);
-                            extendState = ExtendState.EXTENDED;
+                    }
+
+                    // If we collect a sample, retract extension, rotate to transfer position, stop collection
+                    if (!cBeam.getState()) {
+                        target = retracted;
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        //target = retracted;
+                        collection.setPower(0);
+                        extendState = ExtendState.RETRACT;
+                        beamTimer.reset();
+
+
+                    }
+                    if (!dBeam.getState()) {
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        collection.setPower(-.95);
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
+                    }
+                    break;
+                case RETRACT:
+                    if (((double) colorSensor.red() / colorSensor.blue()) >= 2 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.3) && (Math.abs(extend.getCurrentPosition())  >= 80)) {
+                        extendState = ExtendState.EXTEND;
+                    }
+
+                    claw.setPosition(open);
+                    if (beamTimer.seconds() >= 1.2 && cBeam.getState()) {
+                        extendState = ExtendState.EXTEND;
+                    }
+                    if (beamTimer.seconds() >= 1.5 && !cBeam.getState()) {
+                        extendState = ExtendState.EJECT;
+                    }
+
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
+                        deliveryS.setPosition(transferPos);
+                        rCollection.setPosition(transfer);
+                        lCollection.setPosition(transfer);
+                        if (Math.abs(extend.getCurrentPosition() - retracted) < 25 && !lSwitch.getState()) {
+                            collection.setPower(.73);
+
                         }
-                        break;
 
-                    default:
+
+                        if (!dBeam.getState()) {
+                            rCollection.setPosition(xHeight);
+                            lCollection.setPosition(xHeight);
+                            collection.setPower(-.95);
+                            transferTimer.reset();
+                            claw.setPosition(closed);
+                            extendState = ExtendState.TRANSFER;
+                        }
+                    }
+
+
+                    break;
+                case EJECT:
+                    collection.setPower(-.6);
+                    if (beamTimer.seconds() >= 1.7) {
+                        collection.setPower(.66);
+                    }
+                    if (beamTimer.seconds() >= 3) {
+                        extendState = ExtendState.EXTEND;
+                    }
+
+                    if (!dBeam.getState()) {
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        collection.setPower(-.95);
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
+                    }
+                    break;
+                case TRANSFER:
+                    target = shortPos;
+                    if (transferTimer.seconds() >= .1) {
+                        extend.setPower(0);
+                        collection.setPower(0);
+                        target = retracted;
                         extendState = ExtendState.START;
-                }
-                controller.setPID(p, i, d);
-                int curPos = extend.getCurrentPosition();
-                double power = controller.calculate(curPos, target);
-                extend.setPower(power);
-                theOpMode.telemetry.addData("Current State", extendState);
-                theOpMode.telemetry.addData("Beam timer", beamTimer);
-                if (!dBeam.getState()) {
-                    theOpMode.telemetry.addData("Beam", "Broken");
-                } else {
-                    theOpMode.telemetry.addData("Beam", "Not Broken");
-                }
-                theOpMode.telemetry.update();
-                return true;
+                        claw.setPosition(closed);
+                        deliveryS.setPosition(midPos);
+                        return false;
+                    }
+                    break;
+
+                default:
+                    extendState = ExtendState.START;
             }
-
+            controller.setPID(p, i, d);
+            int curPos = extend.getCurrentPosition();
+            double power = controller.calculate(curPos, target);
+            extend.setPower(power);
+            theOpMode.telemetry.addData("Current State", extendState);
+            theOpMode.telemetry.addData("Beam timer", beamTimer);
+            if (!dBeam.getState()) {
+                theOpMode.telemetry.addData("Beam", "Broken");
+            } else {
+                theOpMode.telemetry.addData("Beam", "Not Broken");
+            }
+            theOpMode.telemetry.update();
+            return true;
         }
 
-        public Action subCollectBlue() {
-            return new SubCollectBlue();
+    }
+
+    public Action subCollectBlue() {
+        return new SubCollectBlue();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public class SpecCollect implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (extendState) {
+                //Fully Retracted in transfer position
+                case START:
+                    collection.setPower(0);
+                    extendState = ExtendState.EXTEND;
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+
+                    break;
+                // Rotate to collecting position
+                case EXTEND:
+                    target = extended;
+                    rCollection.setPosition(collect);
+                    lCollection.setPosition(collect);
+
+                    if (!cBeam.getState()) {
+                        target = retracted;
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        //target = retracted;
+                        collection.setPower(0);
+                        extendState = ExtendState.START;
+                        return false;
+                    }
+
+                    if (Math.abs(extend.getCurrentPosition() - target) < 300) {
+
+                        collection.setPower(.95);
+                        beamTimer.reset();
+                        failTimer.reset();
+                        extendState = ExtendState.EXTENDED;
+                    }
+                    break;
+                case EXTENDED:
+                    if (beamTimer.seconds() > 0.85) {
+                        target = shortPos;
+                        lCollection.setPosition(transfer);
+                        rCollection.setPosition(transfer);
+                        if (beamTimer.seconds() > 1.1) {
+                            lCollection.setPosition(collect);
+                            rCollection.setPosition(collect);
+                            target = extended;
+                            beamTimer.reset();
+                        }
+                        if (failTimer.seconds() >= 1.6) {
+                            extend.setPower(0);
+                            collection.setPower(0);
+                            target = retracted;
+                            extendState = ExtendState.START;
+                            return false;
+                        }
+                    }
+
+                    // If we collect a specimen, retract extension, rotate to transfer position, stop collection
+                    if (!cBeam.getState()) {
+                        deliveryS.setPosition(lowerMid);
+                        target = retracted;
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        //target = retracted;
+                        collection.setPower(0);
+                        extendState = ExtendState.START;
+                        beamTimer.reset();
+                        return false;
+
+                    }
+                    break;
+                default:
+                    extendState = ExtendState.START;
+            }
+            controller.setPID(p, i, d);
+            int curPos = extend.getCurrentPosition();
+            double power = controller.calculate(curPos, target);
+            extend.setPower(power);
+            theOpMode.telemetry.addData("Current State", extendState);
+            theOpMode.telemetry.addData("Beam timer", beamTimer);
+            if (!dBeam.getState()) {
+                theOpMode.telemetry.addData("Beam", "Broken");
+            } else {
+                theOpMode.telemetry.addData("Beam", "Not Broken");
+            }
+            theOpMode.telemetry.update();
+            return true;
         }
+
+    }
+
+    public Action specCollect() {
+        return new SpecCollect();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public class SpitOut implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            switch (extendState) {
+                //Fully Retracted in transfer position
+                case START:
+                    collection.setPower(-1);
+                    beamTimer.reset();
+                    rCollection.setPosition(xHeight);
+                    lCollection.setPosition(xHeight);
+                    extendState = ExtendState.RETRACT;
+                    break;
+
+                case RETRACT:
+                    if (beamTimer.seconds() >= .15) {
+                        collection.setPower(0);
+                        extendState = ExtendState.START;
+                        return false;
+                    }
+                    break;
+                default:
+                    extendState = ExtendState.START;
+            }
+            return true;
+        }
+
+    }
+
+    public Action spitOut() {
+        return new SpitOut();
+    }
+
+
 }
-
-

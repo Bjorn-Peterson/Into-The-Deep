@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
 
 @Config
 @Autonomous(name = "Red 8", group = "Autonomous")
-public class SampleTest extends LinearOpMode {
+public class Red8 extends LinearOpMode {
 
 
     @Override
@@ -28,7 +28,8 @@ public class SampleTest extends LinearOpMode {
 
 
         Action toDeliver = drive.actionBuilder(initialPose).
-                splineToLinearHeading(new Pose2d(12,24,Math.toRadians(-25)), Math.toRadians(0)).
+                afterDisp(1, lift.liftUp()).
+                splineToLinearHeading(new Pose2d(12,25,Math.toRadians(-24)), Math.toRadians(0)).
                 build();
         Action score2 = drive.actionBuilder(new Pose2d(11.5, 23, Math.toRadians(-27))).
                 turn(Math.toRadians(25)).
@@ -47,37 +48,40 @@ public class SampleTest extends LinearOpMode {
                 splineTo(new Vector2d(51, -10), Math.toRadians(-90)).
                 build();
         Action afterSub = drive.actionBuilder(new Pose2d(50,-12,-45)).
-                afterDisp(30, lift.liftUp()).
+                afterDisp(32, lift.liftUp()).
                 strafeToConstantHeading(new Vector2d(6.5, 14)).
                 build();
-        Action collect6 = drive.actionBuilder(new Pose2d(10, 4, 0)).
+        Action collect6 = drive.actionBuilder(new Pose2d(12, 16, Math.toRadians(-10))).
                 setReversed(false).
-                afterDisp(6, lift.liftDown()).
-                afterDisp(48, pidf.subCollect()).
+                afterDisp(8, lift.liftDown()).
+                afterDisp(46, pidf.subCollect()).
                 splineTo(new Vector2d(57, -13), Math.toRadians(-90)).
                 build();
         Action jk = drive.actionBuilder(new Pose2d(52,-13,-45)).
-                afterDisp(30, lift.liftUp()).
-                strafeToConstantHeading(new Vector2d(6.5, 14)).
+                afterDisp(35, lift.liftUp()).
+                strafeToConstantHeading(new Vector2d(6, 14)).
                 build();
         Action num7 = drive.actionBuilder(new Pose2d(5, 15, -45)).
                 strafeToLinearHeading(new Vector2d(2, -13), -90).
                 build();
         Action score7 = drive.actionBuilder(new Pose2d(9,-8,-45)).
-                afterDisp(6, lift.liftUp()).
+                afterDisp(3, lift.liftUp()).
                 strafeToConstantHeading(new Vector2d(9, 18)).
                 build();
-        Action heading = drive.actionBuilder(new Pose2d(30, 19, -90)).
-                strafeTo(new Vector2d(30, -100)).
-                build();
-        Action collect8 = drive.actionBuilder(new Pose2d(10, 19, 0)).
+        Action heading = drive.actionBuilder(new Pose2d(10, 19, 0)).
                 setReversed(false).
-                afterDisp(6, lift.liftDown()).
+                afterDisp(8, lift.liftDown()).
                 afterDisp(50, pidf.subCollect()).
+                splineTo(new Vector2d(54, -14), Math.toRadians(-90)).
+                build();
+        Action collect8 = drive.actionBuilder(new Pose2d(10, 16, Math.toRadians(-15))).
+                setReversed(false).
+                afterDisp(8, lift.liftDown()).
+                afterDisp(46, pidf.subCollect()).
                 splineTo(new Vector2d(52, -14), Math.toRadians(-90)).
                 build();
         Action score8 = drive.actionBuilder(new Pose2d(50, -13, -45)).
-                afterDisp(30, lift.liftUp()).
+                afterDisp(36, lift.liftUp()).
                 strafeToConstantHeading(new Vector2d(6.5, 14)).
                 build();
 
@@ -87,7 +91,7 @@ public class SampleTest extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        new ParallelAction(toDeliver, lift.liftUp(), pidf.extendCollection()),
+                        new ParallelAction(toDeliver, pidf.extendCollection()),
                         new ParallelAction(lift.liftDown(), pidf.collectRun()),
                         lift.liftUp(),
                         new ParallelAction(score2, lift.liftDown(), pidf.extendCollection()),
@@ -103,8 +107,14 @@ public class SampleTest extends LinearOpMode {
                         new ParallelAction(jk, pidf.retractCollection()),
                         new ParallelAction(collect8),
                         new ParallelAction(score8, pidf.retractCollection()),
-                        new ParallelAction(heading, pidf.megaExtend(), lift.liftDown())
+                        new ParallelAction(heading)
 
                 ));
     }
 }
+
+
+
+
+
+

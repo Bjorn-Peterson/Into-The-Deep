@@ -25,10 +25,10 @@ public class NewTeleop extends OpMode {
     }
     @Override
     public void loop() {
-        drivetrain.UpdateDriveTrain();
-        lift.soloControls();
-         pidf.tele(false);
-
+       // drivetrain.UpdateDriveTrain();
+        //lift.soloControls();
+        // pidf.tele(false);
+        pidf.testSensors();
 
     }
 
