@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.NewRobot.Lift;
 
 
 @Config
-@Disabled
 @Autonomous(name = "test", group = "Autonomous")
 public class TestAuto extends LinearOpMode {
 
@@ -34,7 +33,11 @@ public class TestAuto extends LinearOpMode {
         waitForStart();
 
         Actions.runBlocking(
-                new SequentialAction(lift.liftUp()
+                new SequentialAction(lift.encoderTest()
                        ));
     }
 }
+
+
+
+

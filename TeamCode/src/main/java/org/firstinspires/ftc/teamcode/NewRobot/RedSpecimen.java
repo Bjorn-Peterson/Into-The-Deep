@@ -50,24 +50,48 @@ public class RedSpecimen extends LinearOpMode {
                 strafeToLinearHeading(new Vector2d(40, 5), Math.toRadians(90)).
                 build();
 
-        Action toPickup2 = drive.actionBuilder(new Pose2d(2, 30.3, Math.toRadians(-90))).
+        Action toPickup2 = drive.actionBuilder(new Pose2d(-2, 30.3, Math.toRadians(-90))).
                 afterDisp(5, lift.liftDown()).
                 strafeToLinearHeading(new Vector2d(40, 7), Math.toRadians(90)).
                 build();
-        Action pickup = drive.actionBuilder(new Pose2d(40, 5, Math.toRadians(90))).
-                strafeToLinearHeading(new Vector2d(40, -2), Math.toRadians(90)).
+        Action toPickup3 = drive.actionBuilder(new Pose2d(-6, 30.3, Math.toRadians(-90))).
+                afterDisp(5, lift.liftDown()).
+                strafeToLinearHeading(new Vector2d(40, 7), Math.toRadians(90)).
+                build();
+        Action toPickup4 = drive.actionBuilder(new Pose2d(-8, 30.3, Math.toRadians(-90))).
+                afterDisp(5, lift.liftDown()).
+                strafeToLinearHeading(new Vector2d(40, 7), Math.toRadians(90)).
+                build();
+        Action pickup = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
+                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
+                build();
+        Action pickup2 = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
+                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
+                build();
+        Action pickup3 = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
+                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
+                build();
+        Action pickup4 = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
+                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
                 build();
         Action deliver2 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-                //afterDisp(10, lift.liftMid()).
-                strafeToLinearHeading(new Vector2d(0, 30.3), Math.toRadians(-90)).
+                afterDisp(10, lift.liftMid()).
+                strafeToLinearHeading(new Vector2d(2, 31.5), Math.toRadians(-90)).
                 build();
         Action deliver3 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-               // afterDisp(10, lift.liftMid()).
-                strafeToLinearHeading(new Vector2d(-2, 30.3), Math.toRadians(-90)).
+                afterDisp(10, lift.liftMid()).
+                strafeToLinearHeading(new Vector2d(-2, 31.5), Math.toRadians(-90)).
                 build();
-        Action deliver4 = drive.actionBuilder(new Pose2d(40, 0, 90)).
-               // afterDisp(10, lift.liftMid()).
-                strafeToLinearHeading(new Vector2d(-4, 30.3), Math.toRadians(-90)).
+        Action deliver4 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
+                afterDisp(10, lift.liftMid()).
+                strafeToLinearHeading(new Vector2d(-6, 31.5), Math.toRadians(-90)).
+                build();
+        Action deliver5 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
+                 afterDisp(10, lift.liftMid()).
+                        strafeToLinearHeading(new Vector2d(-8, 31.5), Math.toRadians(-90)).
+                build();
+        Action park = drive.actionBuilder(new Pose2d(-6, 30.3, Math.toRadians(-90))).
+                splineTo(new Vector2d(20, 15), Math.toRadians(-60)).
                 build();
 
 
@@ -80,7 +104,7 @@ public class RedSpecimen extends LinearOpMode {
                         new ParallelAction(preload, pidf.retractCollection()),
                         lift.specDeliver(),
                         toCollect,
-                        new ParallelAction(collect1, lift.liftDown()),
+                        new ParallelAction(collect1, lift.specDown()),
                         pidf.spitOut(),
                         new ParallelAction(collect2, pidf.extendCollection()),
                         pidf.specCollect(),
@@ -93,22 +117,28 @@ public class RedSpecimen extends LinearOpMode {
 
                         pickup,
                         lift.liftPickup(),
-                        new ParallelAction(deliver2, lift.liftMid()),
+                        new ParallelAction(deliver2),
                         lift.specDeliver(),
                         //Going to collect 2nd from wall
-                        new ParallelAction(toPickup2, pidf.retractCollection()),
+                        new ParallelAction(toPickup2, pidf.retractCollection(), lift.specDown()),
 
-                        pickup,
+                        pickup2,
                         lift.liftPickup(),
-                        new ParallelAction(deliver3, lift.liftMid()),
+                        new ParallelAction(deliver3),
                         lift.specDeliver(),
-                        new ParallelAction(toPickup2, pidf.retractCollection(), lift.liftDown()),
+                        new ParallelAction(toPickup3, pidf.retractCollection(), lift.specDown()),
 
-                        pickup,
+                        pickup3,
                         lift.liftPickup(),
-                        new ParallelAction(deliver4, lift.liftMid()),
+                        new ParallelAction(deliver4),
                         lift.specDeliver(),
-                        new ParallelAction(toPickup2, pidf.retractCollection(), lift.liftDown())
+                        new ParallelAction(toPickup4, pidf.retractCollection(), lift.specDown()),
+
+                        pickup4,
+                        lift.liftPickup(),
+                        new ParallelAction(deliver5),
+                        lift.specDeliver(),
+                        new ParallelAction(park, pidf.megaExtend(), lift.specDown())
 
 //
 //3UHJX3
