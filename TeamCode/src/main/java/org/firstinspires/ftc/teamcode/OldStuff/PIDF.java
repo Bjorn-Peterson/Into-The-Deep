@@ -30,7 +30,8 @@ public class PIDF {
         RESET,
         REJECT,
         DELIVER,
-        SPEC
+        SPEC,
+        SPECIMEN2,
 
     }
 
@@ -49,9 +50,10 @@ public class PIDF {
     public Servo claw;
     public Servo deliveryS;
     public Servo sweep;
+    public Servo door;
 
     int extended = 565;
-    int retracted = 45;
+    int retracted = 20;
     int mid = 300;
     int shortPos = 100;
     double collect = .675;
@@ -59,30 +61,28 @@ public class PIDF {
     double xHeight = .5;
     double initPos = .35;
 
-    double closed = .81;
-    double open = .685;
-    double specClosed = .78;
-    double backSpec = .73;
-    double transferPos = .05;
+    double closed = .58;
+    double open = .39;
+    double specClosed = .54;
+    double backSpec = .71;
+    double transferPos = .02;
     double midPos = .54;
     double lowerMid = .15;
-    double specPos = .7;
-    double midMid = .2;
+    double specPos = .675;
 
-    double in = .295;
-    double out = .65;
+    double in = .2;
+    double out = .53;
+
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
     DigitalChannel touch;
+    DigitalChannel liftTouch;
     ColorSensor colorSensor;
     double sensorReading;
     ElapsedTime transferTimer = new ElapsedTime();
     ElapsedTime beamTimer = new ElapsedTime();
     ElapsedTime failTimer = new ElapsedTime();
-    double blueThreshold = .0011;
-    double redThreshold = .001;
-    double threshold;
 
     public PIDF(HardwareMap hardwareMap, OpMode opMode) {
         theOpMode = opMode;
@@ -108,6 +108,10 @@ public class PIDF {
         lSwitch = hardwareMap.get(DigitalChannel.class, "lSwitch");
         lSwitch.setMode(DigitalChannel.Mode.INPUT);
         sweep = hardwareMap.get(Servo.class, "sweep");
+        door = hardwareMap.get(Servo.class, "door");
+
+        liftTouch = hardwareMap.get(DigitalChannel.class, "lTouch");
+        liftTouch.setMode(DigitalChannel.Mode.INPUT);
 
 
     }
@@ -129,14 +133,19 @@ public class PIDF {
 
     public void tele(boolean isRed) {
         if (theOpMode.gamepad2.left_bumper) {
-            sweep.setPosition(in);
+            sweep.setPosition(out);
         }
         else if (theOpMode.gamepad2.right_bumper) {
-            sweep.setPosition(out);
+            sweep.setPosition(in);
+        }
+        if (theOpMode.gamepad2.dpad_up) {
+            door.setPosition(.4);
+        }
+        else if (theOpMode.gamepad2.dpad_down) {
+            door.setPosition(.15);
         }
 
         if (theOpMode.gamepad1.left_bumper) {
-            sweep.setPosition(in);
             failTimer.reset();
             claw.setPosition(open);
            // deliveryS.setPosition(backSpec);
@@ -144,7 +153,6 @@ public class PIDF {
 
         } else if (theOpMode.gamepad1.right_bumper) {
             claw.setPosition(closed);
-            sweep.setPosition(out);
         }
         if (theOpMode.gamepad1.dpad_up) {
             deliveryS.setPosition(backSpec);
@@ -169,29 +177,6 @@ public class PIDF {
                     extendState = ExtendState.START;
                 }
                 break;
-            case SPEC:
-                target = mid;
-                if (Math.abs(extend.getCurrentPosition() - mid) < 30) {
-                    collection.setPower(.95);
-                    rCollection.setPosition(collect);
-                    lCollection.setPosition(collect);
-
-                    if (!cBeam.getState()) {
-                        deliveryS.setPosition(transferPos);
-                        target = retracted;
-                        collection.setPower(0);
-                        rCollection.setPosition(xHeight);
-                        lCollection.setPosition(xHeight);
-                        extendState = ExtendState.RETRACT;
-                        theOpMode.telemetry.addData("Beam", "Broken");
-                    }
-                    if (theOpMode.gamepad1.x) {
-                        target = extended;
-                        extendState = ExtendState.EXTENDED;
-                    }
-                }
-                break;
-
 
 
 
@@ -203,6 +188,8 @@ public class PIDF {
                 lCollection.setPosition(xHeight);
 
                 if (theOpMode.gamepad1.dpad_left) {
+                    deliveryS.setPosition(specPos);
+                    claw.setPosition(open);
                     extendState = ExtendState.SPECIMEN;
                 }
                 // Start extending, turn on collection
@@ -213,7 +200,6 @@ public class PIDF {
                     extendState = ExtendState.EXTEND;
                 }
                 if (theOpMode.gamepad1.y) {
-                    sweep.setPosition(out);
                     target = mid;
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
@@ -234,11 +220,20 @@ public class PIDF {
                 }
                 break;
             // Rotate to collecting position
+
             case SPECIMEN:
                 deliveryS.setPosition(specPos);
                 claw.setPosition(open);
                 if (!dBeam.getState()) {
+                    transferTimer.reset();
                     claw.setPosition(specClosed);
+                    extendState = ExtendState.SPECIMEN2;
+                }
+                break;
+
+            case SPECIMEN2:
+                if (transferTimer.seconds() >= .4) {
+                    deliveryS.setPosition(transferPos);
                     extendState = ExtendState.START;
                 }
                 break;
@@ -252,6 +247,7 @@ public class PIDF {
                     lCollection.setPosition(collect);
                 }
                 if (!dBeam.getState()) {
+                    door.setPosition(.15);
                     collection.setPower(-.9);
                     transferTimer.reset();
                     claw.setPosition(closed);
@@ -266,13 +262,14 @@ public class PIDF {
 
                 // If we collect a specimen, retract extension, rotate to transfer position, stop collection
                 collection.setPower(.95);
+                door.setPosition(.15);
                 rCollection.setPosition(collect);
                 lCollection.setPosition(collect);
 
                 if (!cBeam.getState()) {
-                    deliveryS.setPosition(midMid);
+                    deliveryS.setPosition(lowerMid);
                     target = retracted;
-                    collection.setPower(0);
+                   // collection.setPower(0);
                     rCollection.setPosition(xHeight);
                     lCollection.setPosition(xHeight);
                     extendState = ExtendState.RETRACT;
@@ -298,14 +295,15 @@ public class PIDF {
             case RETRACT:
 
                 if (((double) colorSensor.red() / colorSensor.blue()) >= 1.4 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.2) && !isRed && (Math.abs(extend.getCurrentPosition())  >= 70)) {
-                    collection.setPower(.8);
+                    door.setPosition(4);
+                    collection.setPower(.7);
                     extendState = ExtendState.EXTEND;
                 }
                 if ((double) colorSensor.blue() / colorSensor.red() >= 1.4 && isRed && (Math.abs(extend.getCurrentPosition())  >= 70)) {
-                    collection.setPower(.8);
+                    door.setPosition(.4);
+                    collection.setPower(.7);
                     extendState = ExtendState.EXTEND;
                 }
-
 
 
                 claw.setPosition(open);
@@ -313,11 +311,13 @@ public class PIDF {
                     deliveryS.setPosition(transferPos);
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 25 && !lSwitch.getState()) {
-                        collection.setPower(.6);
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 25 && !liftTouch.getState()) {
+                        door.setPosition(.4);
+                        collection.setPower(.5);
                     }
                 }
                 if (!dBeam.getState()) {
+                    door.setPosition(.15);
                     collection.setPower(-.9);
                     transferTimer.reset();
                     claw.setPosition(closed);
@@ -328,15 +328,16 @@ public class PIDF {
 
                 break;
             case TRANSFER:
+
                 theOpMode.telemetry.addData("transferTimer", transferTimer);
                 theOpMode.telemetry.update();
                 target = shortPos;
-                if (transferTimer.seconds() >= .2) {
+                if (transferTimer.seconds() >= .1) {
                     collection.setPower(0);
                     target = retracted;
-                    extendState = ExtendState.START;
                     claw.setPosition(closed);
                     deliveryS.setPosition(backSpec);
+                    extendState = ExtendState.START;
                 }
                 break;
             case EJECT:
@@ -371,7 +372,7 @@ public class PIDF {
         controller.setPID(p, i, d);
         int curPos = extend.getCurrentPosition();
         double power = controller.calculate(curPos, target);
-        extend.setPower(power * .9);
+        extend.setPower(power);
         theOpMode.telemetry.addData("pos", curPos);
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.addData("Current State", extendState);
@@ -379,7 +380,7 @@ public class PIDF {
         theOpMode.telemetry.addData("failTimer", failTimer);
         theOpMode.telemetry.addData("deliveryS", deliveryS.getPosition());
 //        theOpMode.telemetry.addData("delivery position", deliveryS.getPosition());
-        if (!dBeam.getState()) {
+        if (!cBeam.getState()) {
             theOpMode.telemetry.addData("Beam", "Broken");
         } else {
             theOpMode.telemetry.addData("Beam", "Not Broken");
@@ -391,11 +392,9 @@ public class PIDF {
     public void testColor(boolean isRed) {
         if (isRed) {
             sensorReading = colorSensor.red();
-            threshold = redThreshold;
 
         } else {
             sensorReading = colorSensor.blue();
-            threshold = blueThreshold;
         }
 
         switch (extendState) {
@@ -483,6 +482,7 @@ public class PIDF {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    door.setPosition(.15);
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
                     rCollection.setPosition(collect);
@@ -492,12 +492,11 @@ public class PIDF {
                 // Rotate to collecting position
                 case EXTEND:
                     target = extended;
-                    deliveryS.setPosition(lowerMid);
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
-                    if (Math.abs(extend.getCurrentPosition() - target) < 300) {
+                    if (Math.abs(extend.getCurrentPosition() - target) < 350) {
 
-                        collection.setPower(.85);
+                        collection.setPower(.95);
                         beamTimer.reset();
                         failTimer.reset();
                         extendState = ExtendState.EXTENDED;
@@ -513,6 +512,14 @@ public class PIDF {
                         beamTimer.reset();
 
 
+                    }
+                    if (!dBeam.getState()) {
+                        rCollection.setPosition(xHeight);
+                        lCollection.setPosition(xHeight);
+                        collection.setPower(-.95);
+                        transferTimer.reset();
+                        claw.setPosition(closed);
+                        extendState = ExtendState.TRANSFER;
                     }
                     break;
                 case EXTENDED:
@@ -561,14 +568,13 @@ public class PIDF {
                 case RETRACT:
                     claw.setPosition(open);
 
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 45) {
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 58) {
                         deliveryS.setPosition(transferPos);
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
-                        if (Math.abs(extend.getCurrentPosition() - retracted) < 20 && !lSwitch.getState()) {
-                            theOpMode.telemetry.addData("Does it Work?", "");
-                            theOpMode.telemetry.update();
-                            collection.setPower(.66);
+                        if (Math.abs(extend.getCurrentPosition() - retracted) < 20) {
+                            door.setPosition(.4);
+                            collection.setPower(.5);
 
 
                             if (beamTimer.seconds() >= 1.5 && cBeam.getState()) {
@@ -585,6 +591,7 @@ public class PIDF {
 
                     }
                     if (!dBeam.getState()) {
+                        door.setPosition(.15);
                         rCollection.setPosition(xHeight);
                         lCollection.setPosition(xHeight);
                         collection.setPower(-.9);
@@ -600,7 +607,7 @@ public class PIDF {
                         extendState = ExtendState.EXTEND;
                     }
                     collection.setPower(-.4);
-                    if (beamTimer.seconds() >= 1.6) {
+                    if (beamTimer.seconds() >= 1.62) {
                         collection.setPower(.75);
                     }
                     if (beamTimer.seconds() >= 2.2) {
@@ -709,8 +716,8 @@ public class PIDF {
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
                 case EXTEND:
-                    target = 230;
-                    if (Math.abs(extend.getCurrentPosition() - target) < 20) {
+                    target = 270;
+                    if (Math.abs(extend.getCurrentPosition() - target) < 25) {
                         extend.setPower(0);
                         extendState = ExtendState.START;
                         return false;
@@ -719,7 +726,7 @@ public class PIDF {
             controller.setPID(p, i, d);
             int curPos = extend.getCurrentPosition();
             double power = controller.calculate(curPos, target);
-            extend.setPower(power);
+            extend.setPower(power * 1.4);
             theOpMode.telemetry.addData("pos", curPos);
             theOpMode.telemetry.addData("target", target);
             theOpMode.telemetry.addData("Current State", extendState);
@@ -769,6 +776,7 @@ public class PIDF {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    door.setPosition(.15);
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
                     deliveryS.setPosition(midPos);
@@ -778,8 +786,6 @@ public class PIDF {
                 // Rotate to collecting position
                 case EXTEND:
                     target = extended;
-                    deliveryS.setPosition(lowerMid);
-                    collection.setPower(.95);
 
                     if (Math.abs(extend.getCurrentPosition() - target) < 350) {
                         rCollection.setPosition(collect);
@@ -799,6 +805,7 @@ public class PIDF {
                     }
                     break;
                 case EXTENDED:
+                    door.setPosition(.15);
                     target = extended;
                     if (beamTimer.seconds() > 0.8) {
                         target = mid;
@@ -810,7 +817,7 @@ public class PIDF {
                             target = extended;
                             beamTimer.reset();
                         }
-                        if (failTimer.seconds() >= 3.4) {
+                        if (failTimer.seconds() >= 2.8) {
                             extend.setPower(0);
                             collection.setPower(0);
                             target = retracted;
@@ -822,6 +829,7 @@ public class PIDF {
 
                     // If we collect a sample, retract extension, rotate to transfer position, stop collection
                     if (!cBeam.getState()) {
+                        deliveryS.setPosition(lowerMid);
                         target = retracted;
                         rCollection.setPosition(xHeight);
                         lCollection.setPosition(xHeight);
@@ -843,7 +851,8 @@ public class PIDF {
                     break;
                 case RETRACT:
                     if ((double) colorSensor.blue() / colorSensor.red() >= 1.4 && (Math.abs(extend.getCurrentPosition())  >= 70)) {
-                        collection.setPower(.8);
+                        door.setPosition(.4);
+                        collection.setPower(.5);
                         extendState = ExtendState.EXTEND;
                     }
 
@@ -855,17 +864,19 @@ public class PIDF {
                         extendState = ExtendState.EJECT;
                     }
 
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 50) {
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 55) {
                         deliveryS.setPosition(transferPos);
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
-                        if (Math.abs(extend.getCurrentPosition() - retracted) < 22 && !lSwitch.getState()) {
-                            collection.setPower(.71);
+                        if (Math.abs(extend.getCurrentPosition() - retracted) < 21) {
+                            door.setPosition(.5);
+                            collection.setPower(.5);
 
                         }
 
 
                         if (!dBeam.getState()) {
+                            door.setPosition(.15);
                             rCollection.setPosition(xHeight);
                             lCollection.setPosition(xHeight);
                             collection.setPower(-.95);
@@ -883,7 +894,7 @@ public class PIDF {
                         extendState = ExtendState.EXTEND;
                     }
                     collection.setPower(-.4);
-                    if (beamTimer.seconds() >= 1.6) {
+                    if (beamTimer.seconds() >= 1.64) {
                         collection.setPower(.75);
                     }
                     if (beamTimer.seconds() >= 2.2) {
@@ -1054,6 +1065,7 @@ public class PIDF {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    door.setPosition(.15);
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
                     deliveryS.setPosition(midPos);
@@ -1063,8 +1075,6 @@ public class PIDF {
                 // Rotate to collecting position
                 case EXTEND:
                     target = extended;
-                    deliveryS.setPosition(lowerMid);
-                    collection.setPower(.95);
 
                     if (Math.abs(extend.getCurrentPosition() - target) < 350) {
                         rCollection.setPosition(collect);
@@ -1084,6 +1094,7 @@ public class PIDF {
                     }
                     break;
                 case EXTENDED:
+                    door.setPosition(.15);
                     target = extended;
                     if (beamTimer.seconds() > 0.8) {
                         target = mid;
@@ -1095,7 +1106,7 @@ public class PIDF {
                             target = extended;
                             beamTimer.reset();
                         }
-                        if (failTimer.seconds() >= 3.4) {
+                        if (failTimer.seconds() >= 2.8) {
                             extend.setPower(0);
                             collection.setPower(0);
                             target = retracted;
@@ -1107,6 +1118,7 @@ public class PIDF {
 
                     // If we collect a sample, retract extension, rotate to transfer position, stop collection
                     if (!cBeam.getState()) {
+                        deliveryS.setPosition(lowerMid);
                         target = retracted;
                         rCollection.setPosition(xHeight);
                         lCollection.setPosition(xHeight);
@@ -1127,8 +1139,9 @@ public class PIDF {
                     }
                     break;
                 case RETRACT:
-                    if (((double) colorSensor.red() / colorSensor.blue()) >= 1.4 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.1) && (Math.abs(extend.getCurrentPosition())  >= 70)) {
-                        collection.setPower(.8);
+                    if (((double) colorSensor.red() / colorSensor.blue()) >= 1.4 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.2) && (Math.abs(extend.getCurrentPosition())  >= 70)) {
+                        door.setPosition(.4);
+                        collection.setPower(.45);
                         extendState = ExtendState.EXTEND;
                     }
 
@@ -1144,13 +1157,15 @@ public class PIDF {
                         deliveryS.setPosition(transferPos);
                         rCollection.setPosition(transfer);
                         lCollection.setPosition(transfer);
-                        if (Math.abs(extend.getCurrentPosition() - retracted) < 22 && !lSwitch.getState()) {
-                            collection.setPower(.71);
+                        if (Math.abs(extend.getCurrentPosition() - retracted) < 22) {
+                            door.setPosition(.4);
+                            collection.setPower(.5);
 
                         }
 
 
                         if (!dBeam.getState()) {
+                            door.setPosition(.15);
                             rCollection.setPosition(xHeight);
                             lCollection.setPosition(xHeight);
                             collection.setPower(-.95);
@@ -1168,7 +1183,7 @@ public class PIDF {
                         extendState = ExtendState.EXTEND;
                     }
                     collection.setPower(-.4);
-                    if (beamTimer.seconds() >= 1.6) {
+                    if (beamTimer.seconds() >= 1.64) {
                         collection.setPower(.75);
                     }
                     if (beamTimer.seconds() >= 2.2) {
@@ -1260,6 +1275,7 @@ public class PIDF {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    door.setPosition(.15);
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
                     rCollection.setPosition(collect);
@@ -1366,6 +1382,7 @@ public class PIDF {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    door.setPosition(.15);
                     collection.setPower(-1);
                     beamTimer.reset();
                     rCollection.setPosition(xHeight);
@@ -1374,7 +1391,7 @@ public class PIDF {
                     break;
 
                 case RETRACT:
-                    if (beamTimer.seconds() >= .15) {
+                    if (beamTimer.seconds() >= .11) {
                         collection.setPower(0);
                         extendState = ExtendState.START;
                         return false;

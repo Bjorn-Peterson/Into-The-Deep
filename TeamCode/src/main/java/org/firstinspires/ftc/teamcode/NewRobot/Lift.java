@@ -37,14 +37,13 @@ public class Lift {
     public static double f = 0.021;
     public static int target;
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
-    double closed = .81;
-    double open = .69;
-    double specClosed = .71;
-    double frontSpec = .02;
-    double backSpec = .73;
-    double midPos = .55;
+    double closed = .58;
+    double open = .39;
+    double specClosed = .54;
+    double backSpec = .72;
+    double midPos = .54;
     double specPos = .77;
-    double backMid = .66;
+    double backMid = .8;
 
 
 
@@ -52,6 +51,7 @@ public class Lift {
      DcMotorEx lift2;
     public Servo claw;
     public Servo deliveryS;
+    public Servo hExtend;
     public DigitalChannel liftTouch;
     ElapsedTime liftTimer = new ElapsedTime();
     ElapsedTime deliveryTimer = new ElapsedTime();
@@ -76,6 +76,7 @@ public class Lift {
         lift2.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
+        hExtend = hardwareMap.get(Servo.class, "hExtend");
         dBeam = hardwareMap.get(DigitalChannel.class, "dBeam");
         dBeam.setMode(DigitalChannel.Mode.INPUT);
         liftTouch = hardwareMap.get(DigitalChannel.class, "lTouch");
@@ -207,10 +208,10 @@ public class Lift {
                     break;
                 case LIFT:
                     claw.setPosition(closed);
-                    deliveryS.setPosition(specPos);
-                    target = 320;
+                    deliveryS.setPosition(backMid);
+                    target = 310;
                     if (Math.abs(lift.getCurrentPosition() - target) < 35) {
-                        claw.setPosition(specClosed);
+                        claw.setPosition(open);
                         lift.setPower(0);
                         lift2.setPower(0);
                         liftState = LiftState.START;
@@ -268,13 +269,13 @@ public class Lift {
                     }
                     break;
                 case LIFTED:
-                    if (liftTimer.seconds() >= .06) {
+                    if (liftTimer.seconds() >= .05) {
                         claw.setPosition(open);
                     }
-                    if (liftTimer.seconds() >= .14) {
+                    if (liftTimer.seconds() >= .09) {
                         deliveryS.setPosition(midPos);
                     }
-                        if (liftTimer.seconds() >= .16) {
+                        if (liftTimer.seconds() >= .12) {
                             liftState = LiftState.START;
                             return false;
 
@@ -351,7 +352,7 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 630;
+                    target = 610;
                     deliveryS.setPosition(backMid);
                     if (Math.abs(lift.getCurrentPosition() - target) < 20) {
                         lift.setPower(0);
@@ -386,8 +387,8 @@ public class Lift {
                             deliveryTimer.reset();
                             break;
                         case DOWN:
-                            deliveryS.setPosition(backSpec);
-                            if (deliveryTimer.seconds() >= .5) {
+                            deliveryS.setPosition(specPos);
+                            if (deliveryTimer.seconds() >= .43) {
                                 claw.setPosition(open);
                                 liftState = LiftState.START;
                                 return false;
@@ -467,7 +468,7 @@ public class Lift {
 
                         target = 150;
                         deliveryS.setPosition(backSpec);
-                        if (Math.abs(lift.getCurrentPosition() - target) < 30) {
+                        if (Math.abs(lift.getCurrentPosition() - target) < 70) {
                             lift.setPower(0);
                             lift2.setPower(0);
                             liftState = LiftState.START;

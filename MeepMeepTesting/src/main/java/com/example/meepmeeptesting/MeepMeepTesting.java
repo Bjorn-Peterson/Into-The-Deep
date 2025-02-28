@@ -18,17 +18,9 @@ public class MeepMeepTesting {
                 .setConstraints(80, 80, Math.toRadians(180), Math.toRadians(180), 12)
                 .build();
 
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(0, 0, Math.toRadians(0))).
-                setTangent(Math.toRadians(35)).
-                        splineToLinearHeading(new Pose2d(12,25,Math.toRadians(-25)), Math.toRadians(0)).
-                turnTo(Math.toRadians(-9)).
-                strafeToLinearHeading(new Vector2d(10, 20), Math.toRadians(25)).
-                turnTo(Math.toRadians(-25)).
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
+                strafeToSplineHeading(new Vector2d(-6, 32.5), Math.toRadians(-90)).
 
-                splineTo(new Vector2d(50, -10), Math.toRadians(-90)).
-
-                setReversed(true).
-                splineToLinearHeading(new Pose2d(9, 15, Math.toRadians(-20)), Math.toRadians(0)).
                 build());
 
 
@@ -56,7 +48,7 @@ public class MeepMeepTesting {
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
               //  .addEntity(myBot)
-                .addEntity(bot2)
+                .addEntity(myBot)
                 .start();
     }
 }

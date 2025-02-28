@@ -27,8 +27,8 @@ public class RedSpecimen extends LinearOpMode {
 
 
         Action preload = drive.actionBuilder(initialPose).
-                afterDisp(5, lift.liftMid()).
-                strafeToLinearHeading(new Vector2d(0, 30.3), Math.toRadians(-90)).
+                afterDisp(4, lift.liftMid()).
+                strafeToLinearHeading(new Vector2d(0, 31), Math.toRadians(-90)).
                 build();
         Action toCollect = drive.actionBuilder(new Pose2d(0, 30, Math.toRadians(-90))).
                 afterDisp(14, pidf.specCollect()).
@@ -38,13 +38,13 @@ public class RedSpecimen extends LinearOpMode {
                 strafeToLinearHeading(new Vector2d(24, 20), Math.toRadians(-35)).
                 build();
         Action collect2 = drive.actionBuilder(new Pose2d(24, 20, Math.toRadians(-35))).
-                strafeToLinearHeading(new Vector2d(29, 21), Math.toRadians(33)).
+                strafeToLinearHeading(new Vector2d(31, 22), Math.toRadians(38)).
                 build();
         Action spit2 = drive.actionBuilder(new Pose2d(23, 20, Math.toRadians(30))).
-                strafeToLinearHeading(new Vector2d(24, 20), Math.toRadians(-35)).
+                strafeToLinearHeading(new Vector2d(24, 20), Math.toRadians(-45)).
                 build();
         Action collect3 = drive.actionBuilder(new Pose2d(24, 20, Math.toRadians(-35))).
-                strafeToLinearHeading(new Vector2d(36, 22), Math.toRadians(35)).
+                strafeToLinearHeading(new Vector2d(38, 22), Math.toRadians(35)).
                 build();
         Action toPickup = drive.actionBuilder(new Pose2d(36, 22, Math.toRadians(35))).
                 strafeToLinearHeading(new Vector2d(40, 5), Math.toRadians(90)).
@@ -63,37 +63,39 @@ public class RedSpecimen extends LinearOpMode {
                 strafeToLinearHeading(new Vector2d(40, 7), Math.toRadians(90)).
                 build();
         Action pickup = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
-                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
+                strafeToLinearHeading(new Vector2d(40, 0.5), Math.toRadians(90)).
                 build();
         Action pickup2 = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
-                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
+                strafeToLinearHeading(new Vector2d(40, 0.5), Math.toRadians(90)).
                 build();
         Action pickup3 = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
-                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
+                strafeToLinearHeading(new Vector2d(40, 0.5), Math.toRadians(90)).
                 build();
         Action pickup4 = drive.actionBuilder(new Pose2d(40, 7, Math.toRadians(90))).
-                strafeToLinearHeading(new Vector2d(40, -1), Math.toRadians(90)).
+                strafeToLinearHeading(new Vector2d(40, 0.5), Math.toRadians(90)).
                 build();
         Action deliver2 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-                afterDisp(10, lift.liftMid()).
-                strafeToLinearHeading(new Vector2d(2, 31.5), Math.toRadians(-90)).
+                afterDisp(20, lift.liftMid()).
+                strafeToSplineHeading(new Vector2d(2, 32.5), Math.toRadians(-90)).
                 build();
         Action deliver3 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-                afterDisp(10, lift.liftMid()).
-                strafeToLinearHeading(new Vector2d(-2, 31.5), Math.toRadians(-90)).
+                afterDisp(20, lift.liftMid()).
+                strafeToSplineHeading(new Vector2d(-4, 32.5), Math.toRadians(-90)).
                 build();
         Action deliver4 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-                afterDisp(10, lift.liftMid()).
-                strafeToLinearHeading(new Vector2d(-6, 31.5), Math.toRadians(-90)).
+                afterDisp(20, lift.liftMid()).
+                strafeToSplineHeading(new Vector2d(-6, 32.5), Math.toRadians(-90)).
                 build();
         Action deliver5 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-                 afterDisp(10, lift.liftMid()).
-                        strafeToLinearHeading(new Vector2d(-8, 31.5), Math.toRadians(-90)).
+                 afterDisp(20, lift.liftMid()).
+                        strafeToSplineHeading(new Vector2d(-8, 32.5), Math.toRadians(-90)).
                 build();
-        Action park = drive.actionBuilder(new Pose2d(-6, 30.3, Math.toRadians(-90))).
-                splineTo(new Vector2d(20, 15), Math.toRadians(-60)).
+        Action park = drive.actionBuilder(new Pose2d(-6, 30.3, Math.toRadians(-60))).
+                splineTo(new Vector2d(40, 20), Math.toRadians(-20)).
                 build();
-
+        Action end = drive.actionBuilder(new Pose2d(35, 20, Math.toRadians(90))).
+                strafeTo(new Vector2d(44, 10)).
+                build();
 
 
         Actions.runBlocking(pidf.initPositions());
@@ -113,9 +115,9 @@ public class RedSpecimen extends LinearOpMode {
                         new ParallelAction(collect3, pidf.extendCollection()),
                         pidf.collectRun(),
                         //Going to collect 1st from wall
-                        new ParallelAction(toPickup, lift.pickup(), pidf.retractCollection()),
+                        new ParallelAction(toPickup,lift.pickup(), pidf.retractCollection()),
 
-                        pickup,
+                        new ParallelAction(pickup),
                         lift.liftPickup(),
                         new ParallelAction(deliver2),
                         lift.specDeliver(),
@@ -138,7 +140,8 @@ public class RedSpecimen extends LinearOpMode {
                         lift.liftPickup(),
                         new ParallelAction(deliver5),
                         lift.specDeliver(),
-                        new ParallelAction(park, pidf.megaExtend(), lift.specDown())
+                        new ParallelAction(park, pidf.collectRun(), lift.specDown()),
+                        new ParallelAction(end, pidf.retractCollection())
 
 //
 //3UHJX3

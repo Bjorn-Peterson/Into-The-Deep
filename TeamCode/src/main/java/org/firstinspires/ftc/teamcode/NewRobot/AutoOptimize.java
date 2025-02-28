@@ -225,7 +225,6 @@ public class AutoOptimize {
                 switch (extendState) {
                     //Fully Retracted in transfer position
                     case START:
-                        liftTarget = 0;
                         collection.setPower(0);
                         extendState = ExtendState.RETRACT;
 
@@ -239,7 +238,7 @@ public class AutoOptimize {
                             deliveryS.setPosition(transferPos);
                             rCollection.setPosition(transfer);
                             lCollection.setPosition(transfer);
-                            if (Math.abs(extend.getCurrentPosition() - retracted) < 25 && !lSwitch.getState()) {
+                            if (Math.abs(extend.getCurrentPosition() - retracted) < 25) {
                                 collection.setPower(.73);
 
                             }
@@ -277,13 +276,13 @@ public class AutoOptimize {
                         }
                         break;
                     case LIFTED:
-                        if (liftTimer.seconds() >= .01) {
+                        if (liftTimer.seconds() >= .06) {
                             claw.setPosition(open);
                         }
                         if (liftTimer.seconds() >= .14) {
                             deliveryS.setPosition(midPos);
                         }
-                        if (liftTimer.seconds() >= .18) {
+                        if (liftTimer.seconds() >= .16) {
                             extendState = ExtendState.START;
                             return false;
 
