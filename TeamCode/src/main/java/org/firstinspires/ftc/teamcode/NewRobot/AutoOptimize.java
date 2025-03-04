@@ -14,6 +14,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.OldStuff.PIDF;
+
 
 public class AutoOptimize {
 
@@ -25,7 +27,8 @@ public class AutoOptimize {
         EXTENDED,
         TRANSFER,
         LIFT,
-        LIFTED
+        LIFTED,
+        REJECT
 
     }
 
@@ -42,21 +45,23 @@ public class AutoOptimize {
     public Servo lCollection;
     public Servo claw;
     public Servo deliveryS;
+    public Servo door;
 
     int extended = 565;
     int retracted = 20;
     int mid = 300;
     int shortPos = 100;
-    double collect = .68;
+    double collect = .675;
     double transfer = .54;
     double xHeight = .5;
 
-    double closed = .87;
-    double open = .754;
-    double backSpec = .69;
-    double transferPos = .35;
-    double midPos = .57;
-    double lowerMid = .41;
+    double closed = .58;
+    double open = .39;
+    double backSpec = .71;
+    double transferPos = .02;
+    double midPos = .54;
+    double lowerMid = .15;
+
     DigitalChannel cBeam;
     DigitalChannel dBeam;
     DigitalChannel lSwitch;
@@ -94,6 +99,7 @@ public class AutoOptimize {
         rCollection.setDirection(Servo.Direction.REVERSE);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
+        door = hardwareMap.get(Servo.class, "door");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         touch = hardwareMap.get(DigitalChannel.class, "touch");
@@ -113,6 +119,7 @@ public class AutoOptimize {
 
         lift.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         lift2.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -128,6 +135,7 @@ public class AutoOptimize {
             switch (extendState) {
                 //Fully Retracted in transfer position
                 case START:
+                    door.setPosition(.15);
                     collection.setPower(0);
                     extendState = ExtendState.EXTEND;
                     deliveryS.setPosition(midPos);
@@ -137,8 +145,6 @@ public class AutoOptimize {
                 // Rotate to collecting position
                 case EXTEND:
                     target = extended;
-                    deliveryS.setPosition(lowerMid);
-                    collection.setPower(.95);
 
                     if (Math.abs(extend.getCurrentPosition() - target) < 350) {
                         rCollection.setPosition(collect);
@@ -151,6 +157,7 @@ public class AutoOptimize {
 
                     break;
                 case EXTENDED:
+                    door.setPosition(.15);
                     target = extended;
                     if (beamTimer.seconds() > 0.8) {
                         target = mid;
@@ -162,7 +169,7 @@ public class AutoOptimize {
                             target = extended;
                             beamTimer.reset();
                         }
-                        if (failTimer.seconds() >= 3.4) {
+                        if (failTimer.seconds() >= 2.8) {
                             extend.setPower(0);
                             collection.setPower(0);
                             target = retracted;
@@ -172,6 +179,7 @@ public class AutoOptimize {
                         }
                     }
                     if (!cBeam.getState()) {
+                        deliveryS.setPosition(lowerMid);
                         target = retracted;
                         rCollection.setPosition(xHeight);
                         lCollection.setPosition(xHeight);
@@ -184,8 +192,10 @@ public class AutoOptimize {
                     }
                     break;
                 case RETRACT:
-                    if (((double) colorSensor.red() / colorSensor.blue()) >= 2 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.3) && (Math.abs(extend.getCurrentPosition()) >= 80)) {
-                        extendState = ExtendState.EXTEND;
+                    if ((double) colorSensor.blue() / colorSensor.red() >= 1.4 && (Math.abs(extend.getCurrentPosition())  >= 70)) {
+                        beamTimer.reset();
+                        collection.setPower(-.5);
+                        extendState = ExtendState.REJECT;
                     }
 
                     claw.setPosition(open);
@@ -197,6 +207,12 @@ public class AutoOptimize {
                         target = retracted;
                         extendState = ExtendState.START;
                         return false;
+                    }
+                    break;
+                case REJECT:
+                    if (beamTimer.seconds() >= .4 && cBeam.getState()) {
+                        collection.setPower(.6);
+                        extendState = ExtendState.EXTEND;
                     }
                     break;
 
@@ -234,17 +250,19 @@ public class AutoOptimize {
                         target = retracted;
                         claw.setPosition(open);
 
-                        if (Math.abs(extend.getCurrentPosition() - retracted) < 60) {
+                        if (Math.abs(extend.getCurrentPosition() - retracted) < 55) {
                             deliveryS.setPosition(transferPos);
                             rCollection.setPosition(transfer);
                             lCollection.setPosition(transfer);
-                            if (Math.abs(extend.getCurrentPosition() - retracted) < 25) {
-                                collection.setPower(.73);
+                            if (Math.abs(extend.getCurrentPosition() - retracted) < 21) {
+                                collection.setPower(.5);
+                                door.setPosition(.5);
 
                             }
 
 
                             if (!dBeam.getState()) {
+                                door.setPosition(.15);
                                 rCollection.setPosition(xHeight);
                                 lCollection.setPosition(xHeight);
                                 collection.setPower(-.95);
@@ -257,9 +275,9 @@ public class AutoOptimize {
 
                         break;
                     case TRANSFER:
-                        deliveryS.setPosition(midPos);
                         target = shortPos;
-                        if (transferTimer.seconds() >= .17) {
+                        if (transferTimer.seconds() >= .1) {
+                            deliveryS.setPosition(midPos);
                             extend.setPower(0);
                             collection.setPower(0);
                             target = retracted;
@@ -268,21 +286,21 @@ public class AutoOptimize {
                         }
                         break;
                     case LIFT:
-                        liftTarget = 975;
-                        if (Math.abs(lift.getCurrentPosition() - liftTarget) < 20) {
+                        liftTarget = 1000;
+                        if (Math.abs(lift.getCurrentPosition() - liftTarget) < 38) {
                             deliveryS.setPosition(backSpec);
                             liftTimer.reset();
                             extendState = ExtendState.LIFTED;
                         }
                         break;
                     case LIFTED:
-                        if (liftTimer.seconds() >= .06) {
+                        if (liftTimer.seconds() >= .05) {
                             claw.setPosition(open);
                         }
-                        if (liftTimer.seconds() >= .14) {
+                        if (liftTimer.seconds() >= .09) {
                             deliveryS.setPosition(midPos);
                         }
-                        if (liftTimer.seconds() >= .16) {
+                        if (liftTimer.seconds() >= .12) {
                             extendState = ExtendState.START;
                             return false;
 
