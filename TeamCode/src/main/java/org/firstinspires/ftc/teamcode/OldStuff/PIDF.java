@@ -239,6 +239,7 @@ public class PIDF {
                 break;
 
             case EXTEND:
+                door.setPosition(.4);
                 target = extended;
                 if (Math.abs(extend.getCurrentPosition() - extended) < 180 && theOpMode.gamepad1.x) {
                     extendState = ExtendState.EXTENDED;
@@ -295,13 +296,13 @@ public class PIDF {
             case RETRACT:
 
                 if (((double) colorSensor.red() / colorSensor.blue()) >= 1.4 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.2) && !isRed && (Math.abs(extend.getCurrentPosition())  >= 70)) {
-                    door.setPosition(4);
-                    collection.setPower(.7);
+                    door.setPosition(.4);
+                    collection.setPower(.6);
                     extendState = ExtendState.EXTEND;
                 }
                 if ((double) colorSensor.blue() / colorSensor.red() >= 1.4 && isRed && (Math.abs(extend.getCurrentPosition())  >= 70)) {
                     door.setPosition(.4);
-                    collection.setPower(.7);
+                    collection.setPower(.6);
                     extendState = ExtendState.EXTEND;
                 }
 
@@ -342,7 +343,7 @@ public class PIDF {
                 break;
             case EJECT:
                 if (theOpMode.gamepad1.b) {
-                    collection.setPower(-.6);
+                    collection.setPower(-.35);
                 } else {
                     collection.setPower(0);
                     extendState = ExtendState.START;
@@ -851,9 +852,9 @@ public class PIDF {
                     break;
                 case RETRACT:
                     if ((double) colorSensor.blue() / colorSensor.red() >= 1.4 && (Math.abs(extend.getCurrentPosition())  >= 70)) {
-                        door.setPosition(.4);
-                        collection.setPower(.5);
-                        extendState = ExtendState.EXTEND;
+                        beamTimer.reset();
+                        collection.setPower(-.5);
+                        extendState = ExtendState.REJECT;
                     }
 
                     claw.setPosition(open);
@@ -909,6 +910,13 @@ public class PIDF {
                         claw.setPosition(closed);
                         extendState = ExtendState.TRANSFER;
                     }
+                    break;
+
+                case REJECT:
+                        if (beamTimer.seconds() >= .4 && cBeam.getState()) {
+                            collection.setPower(.6);
+                            extendState = ExtendState.EXTEND;
+                        }
                     break;
                 case TRANSFER:
                     target = shortPos;
@@ -1140,9 +1148,8 @@ public class PIDF {
                     break;
                 case RETRACT:
                     if (((double) colorSensor.red() / colorSensor.blue()) >= 1.4 && ((double) colorSensor.red() / colorSensor.alpha() >= 1.2) && (Math.abs(extend.getCurrentPosition())  >= 70)) {
-                        door.setPosition(.4);
-                        collection.setPower(.45);
-                        extendState = ExtendState.EXTEND;
+                        collection.setPower(-.45);
+                        extendState = ExtendState.REJECT;
                     }
 
                     claw.setPosition(open);
@@ -1197,6 +1204,12 @@ public class PIDF {
                         transferTimer.reset();
                         claw.setPosition(closed);
                         extendState = ExtendState.TRANSFER;
+                    }
+                    break;
+                case REJECT:
+                    if (beamTimer.seconds() >= .4 && cBeam.getState()) {
+                        collection.setPower(.6);
+                        extendState = ExtendState.EXTEND;
                     }
                     break;
                 case TRANSFER:

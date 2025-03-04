@@ -87,8 +87,8 @@ public class RedSpecimen extends LinearOpMode {
                 strafeToSplineHeading(new Vector2d(-6, 32.5), Math.toRadians(-90)).
                 build();
         Action deliver5 = drive.actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-                 afterDisp(20, lift.liftMid()).
-                        strafeToSplineHeading(new Vector2d(-8, 32.5), Math.toRadians(-90)).
+                afterDisp(20, lift.liftMid()).
+                strafeToSplineHeading(new Vector2d(-8, 32.5), Math.toRadians(-90)).
                 build();
         Action park = drive.actionBuilder(new Pose2d(-6, 30.3, Math.toRadians(-60))).
                 splineTo(new Vector2d(40, 20), Math.toRadians(-20)).

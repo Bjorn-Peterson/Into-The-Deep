@@ -485,8 +485,8 @@ public class Lift {
             double pid = controller.calculate(curPos, target);
             double ff = Math.cos(Math.toRadians(target / ticksPerInch)) * f;
             double power = pid + ff;
-            lift.setPower(power);
-            lift2.setPower(power);
+            lift.setPower(power * 1.6);
+            lift2.setPower(power * 1.6);
             return true;
         }
     }
