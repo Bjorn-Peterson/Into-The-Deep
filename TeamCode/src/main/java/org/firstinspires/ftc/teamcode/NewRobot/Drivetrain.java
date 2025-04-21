@@ -71,7 +71,7 @@ public class Drivetrain {
         }
         double y = theOpMode.gamepad1.left_stick_y; // Remember, this is reversed!
         double x = -theOpMode.gamepad1.left_stick_x; // Counteract imperfect strafing
-        double rx = -theOpMode.gamepad1.right_stick_x;
+        double rx = -theOpMode.gamepad1.right_stick_x * .8;
 
         // Read inverse IMU heading, as the IMU heading is CW positive
 

@@ -18,30 +18,9 @@ public class MeepMeepTesting {
                 .setConstraints(80, 80, Math.toRadians(180), Math.toRadians(180), 12)
                 .build();
 
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(40, 0, Math.toRadians(90))).
-                strafeToSplineHeading(new Vector2d(-6, 32.5), Math.toRadians(-90)).
-
-                build());
-
-
-
-        RoadRunnerBotEntity bot2 = new DefaultBotBuilder(meepMeep).setConstraints(80, 80, Math.toRadians(180), Math.toRadians(180), 12)
-                .build();
-                bot2.runAction(bot2.getDrive().actionBuilder(new Pose2d(0,0,Math.toRadians(-90))).
-                        waitSeconds(2).
-                        strafeTo(new Vector2d(12.5, -47)).
-                strafeTo(new Vector2d(12.5, -56)).
-                waitSeconds(.25).
-
-                turn(Math.toRadians(-35)).
-                waitSeconds(.25).
-
-                waitSeconds(.4).
-                strafeTo(new Vector2d(1, -30)).
-
-                strafeTo(new Vector2d(31.5, 8)).
-
-                strafeTo(new Vector2d(1, -30)).
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(50, -13, Math.toRadians(-90))).
+                setReversed(true).
+                splineTo(new Vector2d(9, 16.5), Math.toRadians(140)).
                 build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_DARK)

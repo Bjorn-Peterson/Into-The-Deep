@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -51,18 +52,20 @@ public class PIDF {
     public Servo deliveryS;
     public Servo sweep;
     public Servo door;
+    public CRServo hang;
+    public CRServo hang2;
 
     int extended = 565;
     int retracted = 20;
     int mid = 300;
     int shortPos = 100;
-    double collect = .675;
-    double transfer = .54;
-    double xHeight = .5;
-    double initPos = .35;
+    double collect = .6;
+    double transfer = .44;
+    double xHeight = .41;
+    double initPos = .23;
 
-    double closed = .58;
-    double open = .39;
+    double closed = .625;
+    double open = .42;
     double specClosed = .54;
     double backSpec = .71;
     double transferPos = .02;
@@ -96,6 +99,9 @@ public class PIDF {
         rCollection.setDirection(Servo.Direction.REVERSE);
         claw = hardwareMap.get(Servo.class, "claw");
         deliveryS = hardwareMap.get(Servo.class, "delivery");
+
+        hang = hardwareMap.get(CRServo.class, "hang");
+        hang2 = hardwareMap.get(CRServo.class, "hang2");
         collection = hardwareMap.get(DcMotorEx.class, "collection");
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         touch = hardwareMap.get(DigitalChannel.class, "touch");
@@ -132,8 +138,20 @@ public class PIDF {
     }
 
     public void tele(boolean isRed) {
-        if (theOpMode.gamepad2.left_bumper) {
-            sweep.setPosition(out);
+        if (theOpMode.gamepad2.a) {
+            hang.setPower(.8);
+            hang2.setPower(-.8);
+        }
+        else if (theOpMode.gamepad2.b) {
+            hang.setPower(-.8);
+            hang2.setPower(.8);
+        }
+        else {
+            hang.setPower(0);
+            hang2.setPower(0);
+        }
+        if (theOpMode.gamepad1.dpad_right) {
+            sweep.setPosition(in);
         }
         else if (theOpMode.gamepad2.right_bumper) {
             sweep.setPosition(in);
@@ -167,9 +185,6 @@ public class PIDF {
         if (theOpMode.gamepad1.ps) {
             extendState = ExtendState.RESET;
         }
-        if (theOpMode.gamepad1.dpad_right) {
-            extendState = ExtendState.SPEC;
-        }
         switch (extendState) {
             case DELIVER:
                 if (failTimer.seconds() >= .3) {
@@ -200,6 +215,7 @@ public class PIDF {
                     extendState = ExtendState.EXTEND;
                 }
                 if (theOpMode.gamepad1.y) {
+                    sweep.setPosition(out);
                     target = mid;
                     rCollection.setPosition(collect);
                     lCollection.setPosition(collect);
@@ -239,7 +255,6 @@ public class PIDF {
                 break;
 
             case EXTEND:
-                door.setPosition(.4);
                 target = extended;
                 if (Math.abs(extend.getCurrentPosition() - extended) < 180 && theOpMode.gamepad1.x) {
                     extendState = ExtendState.EXTENDED;
@@ -248,7 +263,7 @@ public class PIDF {
                     lCollection.setPosition(collect);
                 }
                 if (!dBeam.getState()) {
-                    door.setPosition(.15);
+                    door.setPosition(.05);
                     collection.setPower(-.9);
                     transferTimer.reset();
                     claw.setPosition(closed);
@@ -263,7 +278,7 @@ public class PIDF {
 
                 // If we collect a specimen, retract extension, rotate to transfer position, stop collection
                 collection.setPower(.95);
-                door.setPosition(.15);
+                door.setPosition(.05);
                 rCollection.setPosition(collect);
                 lCollection.setPosition(collect);
 
@@ -300,7 +315,7 @@ public class PIDF {
                     collection.setPower(.6);
                     extendState = ExtendState.EXTEND;
                 }
-                if ((double) colorSensor.blue() / colorSensor.red() >= 1.4 && isRed && (Math.abs(extend.getCurrentPosition())  >= 70)) {
+                if ((double) colorSensor.blue() / colorSensor.red() >= 1.45 && isRed && (Math.abs(extend.getCurrentPosition())  >= 70)) {
                     door.setPosition(.4);
                     collection.setPower(.6);
                     extendState = ExtendState.EXTEND;
@@ -308,18 +323,18 @@ public class PIDF {
 
 
                 claw.setPosition(open);
-                if (Math.abs(extend.getCurrentPosition() - retracted) < 40) {
+                if (Math.abs(extend.getCurrentPosition() - retracted) < 45) {
                     deliveryS.setPosition(transferPos);
                     rCollection.setPosition(transfer);
                     lCollection.setPosition(transfer);
-                    if (Math.abs(extend.getCurrentPosition() - retracted) < 25 && !liftTouch.getState()) {
+                    if (Math.abs(extend.getCurrentPosition() - retracted) < 22 && !liftTouch.getState()) {
                         door.setPosition(.4);
                         collection.setPower(.5);
                     }
                 }
                 if (!dBeam.getState()) {
-                    door.setPosition(.15);
-                    collection.setPower(-.9);
+                    door.setPosition(.05);
+                    collection.setPower(-1);
                     transferTimer.reset();
                     claw.setPosition(closed);
                     extendState = ExtendState.TRANSFER;
@@ -333,7 +348,7 @@ public class PIDF {
                 theOpMode.telemetry.addData("transferTimer", transferTimer);
                 theOpMode.telemetry.update();
                 target = shortPos;
-                if (transferTimer.seconds() >= .1) {
+                if (transferTimer.seconds() >= .15) {
                     collection.setPower(0);
                     target = retracted;
                     claw.setPosition(closed);
@@ -343,7 +358,7 @@ public class PIDF {
                 break;
             case EJECT:
                 if (theOpMode.gamepad1.b) {
-                    collection.setPower(-.35);
+                    collection.setPower(-.45);
                 } else {
                     collection.setPower(0);
                     extendState = ExtendState.START;
@@ -374,17 +389,21 @@ public class PIDF {
         int curPos = extend.getCurrentPosition();
         double power = controller.calculate(curPos, target);
         extend.setPower(power);
-        theOpMode.telemetry.addData("pos", curPos);
+       // theOpMode.telemetry.addData("pos", curPos);
         theOpMode.telemetry.addData("target", target);
         theOpMode.telemetry.addData("Current State", extendState);
         theOpMode.telemetry.addData("power", power);
-        theOpMode.telemetry.addData("failTimer", failTimer);
-        theOpMode.telemetry.addData("deliveryS", deliveryS.getPosition());
+        theOpMode.telemetry.addData("door", door.getPosition());
 //        theOpMode.telemetry.addData("delivery position", deliveryS.getPosition());
-        if (!cBeam.getState()) {
-            theOpMode.telemetry.addData("Beam", "Broken");
+        if (!dBeam.getState()) {
+            theOpMode.telemetry.addData("Delivery Beam", "Broken");
         } else {
-            theOpMode.telemetry.addData("Beam", "Not Broken");
+            theOpMode.telemetry.addData("Delivery Beam", "Not Broken");
+        }
+        if (!cBeam.getState()) {
+            theOpMode.telemetry.addData("Collection Beam", "Broken");
+        } else {
+            theOpMode.telemetry.addData("Collection Beam", "Not Broken");
         }
         theOpMode.telemetry.update();
     }
@@ -514,14 +533,7 @@ public class PIDF {
 
 
                     }
-                    if (!dBeam.getState()) {
-                        rCollection.setPosition(xHeight);
-                        lCollection.setPosition(xHeight);
-                        collection.setPower(-.95);
-                        transferTimer.reset();
-                        claw.setPosition(closed);
-                        extendState = ExtendState.TRANSFER;
-                    }
+
                     break;
                 case EXTENDED:
                     if (beamTimer.seconds() > 0.85) {
@@ -557,14 +569,7 @@ public class PIDF {
 
 
                     }
-                    if (!dBeam.getState()) {
-                        rCollection.setPosition(xHeight);
-                        lCollection.setPosition(xHeight);
-                        collection.setPower(-.95);
-                        transferTimer.reset();
-                        claw.setPosition(closed);
-                        extendState = ExtendState.TRANSFER;
-                    }
+
                     break;
                 case RETRACT:
                     claw.setPosition(open);
@@ -718,7 +723,7 @@ public class PIDF {
                     lCollection.setPosition(transfer);
                 case EXTEND:
                     target = 270;
-                    if (Math.abs(extend.getCurrentPosition() - target) < 25) {
+                    if (Math.abs(extend.getCurrentPosition() - target) < 45) {
                         extend.setPower(0);
                         extendState = ExtendState.START;
                         return false;
@@ -750,7 +755,7 @@ public class PIDF {
                     rCollection.setPosition(xHeight);
                     lCollection.setPosition(xHeight);
                 case EXTEND:
-                    target = 0;
+                    target = shortPos;
                     if (Math.abs(extend.getCurrentPosition() - target) < 40) {
                         extend.setPower(0);
                         extendState = ExtendState.START;

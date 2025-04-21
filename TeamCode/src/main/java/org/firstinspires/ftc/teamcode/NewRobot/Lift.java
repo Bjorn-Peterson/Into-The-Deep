@@ -37,8 +37,8 @@ public class Lift {
     public static double f = 0.021;
     public static int target;
     private final double ticksPerInch = (145.1) / (1.15 * 3.14);
-    double closed = .58;
-    double open = .39;
+    double closed = .61;
+    double open = .42;
     double specClosed = .54;
     double backSpec = .72;
     double midPos = .54;
@@ -261,8 +261,8 @@ public class Lift {
                     liftState = LiftState.LIFT;
                     break;
                 case LIFT:
-                    target = 1000;
-                    if (Math.abs(lift.getCurrentPosition() - target) < 38) {
+                    target = 980;
+                    if (Math.abs(lift.getCurrentPosition() - target) < 55) {
                         deliveryS.setPosition(backSpec);
                         liftTimer.reset();
                         liftState = LiftState.LIFTED;
@@ -272,10 +272,10 @@ public class Lift {
                     if (liftTimer.seconds() >= .05) {
                         claw.setPosition(open);
                     }
-                    if (liftTimer.seconds() >= .09) {
+                    if (liftTimer.seconds() >= .07) {
                         deliveryS.setPosition(midPos);
                     }
-                        if (liftTimer.seconds() >= .12) {
+                        if (liftTimer.seconds() >= .08) {
                             liftState = LiftState.START;
                             return false;
 
@@ -315,13 +315,13 @@ public class Lift {
                     liftTimer.reset();
                     break;
                 case DOWN:
-                    target = -25;
-                    if (liftTimer.seconds() >= 1.5) {
+                    target = -40;
+                    if (liftTimer.seconds() >= 2.5) {
                         return false;
                     }
-                    if (Math.abs(lift.getCurrentPosition() - target) < 30 && !liftTouch.getState()) {
-                        lift.setPower(-0.12);
-                        lift2.setPower(-0.12);
+                    if (Math.abs(lift.getCurrentPosition() - target) < 45 && !liftTouch.getState()) {
+                        lift.setPower(-0.3);
+                        lift2.setPower(-0.3);
                         liftState = LiftState.START;
                         return false;
                     }
